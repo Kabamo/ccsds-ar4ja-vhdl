@@ -17,7 +17,7 @@ Independent VHDL implementation targeting a Zynq UltraScale+ FPGA.
 
 The intended interface is one complete 2048-LLR input frame and one 1024-bit systematic information output frame. Positive LLR favors bit 0; negative LLR favors bit 1. The first array element represents transmitted CCSDS Bit 0. CRC processing is deliberately outside the LDPC decoder: the caller must specify which information bits contain CRC and remove them after decoding.
 
-The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd`. This is an interface contract only; it is not yet an operational decoder.
+The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd`. The first sequential decoder prototype is in `rtl/ar4ja_1024_decoder.vhd`; it is not yet validated beyond compilation/simulation tests and is not yet optimized for FPGA resources or timing.
 
 ## Current status
 
@@ -27,9 +27,9 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] Self-checking primitive testbench (user reported PASS in EDA Playground)
 - [x] Fixed-mode frame contract and testbench (user reported PASS in EDA Playground)
 - [x] Sparse AR4JA graph ROM generated for the fixed M=512 mode
-- [x] Graph structural testbench: row degrees, edge count, column degrees and puncturing identity (awaiting user GHDL run)
-- [ ] Iterative decoder datapath/control and message memory
-- [ ] End-to-end golden vectors and error-correction tests
+- [x] Graph structural testbench: row degrees, edge count, column degrees and puncturing identity (user reported PASS in EDA Playground)
+- [x] First sequential layered normalized-min-sum decoder RTL prototype (not yet simulation-validated)
+- [ ] Decoder smoke test and end-to-end golden vectors / error-correction tests
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
 
@@ -62,6 +62,20 @@ Expected report: `PASS: AR4JA K=1024 rate-1/2 frame contract completed`.
 4. Compile and run with GHDL.
 
 Expected report: `PASS: AR4JA graph dimensions, row degrees, edges and puncturing checks completed`.
+
+## EDA Playground: decoder smoke test
+
+Add these files to Design in this order:
+1. `rtl/ldpc_fixed_pkg.vhd`
+2. `rtl/ar4ja_1024_frame_pkg.vhd`
+3. `rtl/ar4ja_1024_graph_pkg.vhd`
+4. `rtl/ar4ja_1024_decoder.vhd`
+
+Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to `tb_ar4ja_1024_decoder`. Run with GHDL. The test drives positive LLRs for the all-zero codeword and checks convergence and all 1024 decoded information bits.
+
+Expected report: `PASS: AR4JA decoder converges on the all-zero codeword`.
+
+This is only a smoke test: it checks control flow and zero-syndrome convergence, not error correction under noisy/corrupted input. The initial RTL uses a simple row-sequential memory model and needs simulation, synthesis, timing and resource review before hardware use.
 
 ## Repository layout
 
