@@ -3,9 +3,7 @@
 library ieee; use ieee.std_logic_1164.all;
 package ar4ja_k1024_r23_graph_pkg is
  constant AR4JA_GRAPH_ROWS: positive := 768; constant AR4JA_GRAPH_COLS: positive := 1792;
- constant AR4JA_GRAPH_MAX_ROW_DEGREE: positive := 10; constant AR4JA_INFO_BITS: positive := 1024;
- constant AR4JA_TX_BITS: positive := 1536; constant AR4JA_FULL_BITS: positive := 1792;
- constant AR4JA_PUNCTURED: positive := 256; constant AR4JA_M: positive := 256;
+ constant AR4JA_GRAPH_MAX_ROW_DEGREE: positive := 10;
  subtype ar4ja_graph_col_t is integer range -1 to AR4JA_GRAPH_COLS-1;
  type ar4ja_graph_row_t is array(0 to AR4JA_GRAPH_MAX_ROW_DEGREE-1) of ar4ja_graph_col_t;
  type ar4ja_graph_rows_t is array(0 to AR4JA_GRAPH_ROWS-1) of ar4ja_graph_row_t;
