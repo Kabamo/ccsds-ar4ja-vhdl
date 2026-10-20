@@ -30,8 +30,9 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] Graph structural testbench: row degrees, edge count, column degrees and puncturing identity (user reported PASS in EDA Playground)
 - [x] First sequential layered normalized-min-sum decoder RTL prototype
 - [x] Decoder smoke test: all-zero codeword converges and all 1024 decoded information bits are checked (user reported PASS in EDA Playground)
-- [ ] Single-LLR error-correction test (testbench added; awaiting user-reported GHDL PASS)
-- [ ] Multi-error tests and end-to-end golden vectors
+- [x] Single-LLR error-correction test (user reported GHDL PASS)
+- [ ] Four-LLR error-correction test (testbench added; awaiting user-reported GHDL PASS)
+- [ ] Broader multi-error sweeps and end-to-end golden vectors
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
 
@@ -73,14 +74,15 @@ Add these files to Design in this order:
 3. `rtl/ar4ja_1024_graph_pkg.vhd`
 4. `rtl/ar4ja_1024_decoder.vhd`
 
-Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to `tb_ar4ja_1024_decoder`. Run with GHDL. The test first sends a clean all-zero codeword, then flips the sign of information-bit 0's LLR to `-8` while the other transmitted LLRs remain `+20`. Both runs must converge to the all-zero information frame.
+Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to `tb_ar4ja_1024_decoder`. Run with GHDL. The test first sends a clean all-zero codeword, then flips the sign of information-bit 0's LLR to `-8`, and finally flips bits 0 through 3 to `-8`, while all other transmitted LLRs remain `+20`. Every run must converge to the all-zero information frame.
 
 Expected reports:
 - `PASS: clean all-zero codeword`
 - `PASS: decoder corrects one corrupted information-bit LLR`
-- `PASS: AR4JA decoder clean-frame and single-error tests completed`
+- `PASS: decoder corrects four corrupted information-bit LLRs`
+- `PASS: AR4JA decoder clean-frame, single-error and four-error tests completed`
 
-The clean-frame test was previously reported PASS by the user at 30755 ns. The new single-error case is not yet validated. This remains an early algorithm test: more error patterns and golden vectors are required, and the RTL needs synthesis, timing and resource review before hardware use.
+The user reported PASS for both the clean-frame and single-LLR tests. The four-error case is newly added and awaits a GHDL run. This remains an early algorithm test: broader error patterns and golden vectors are required, and the RTL needs synthesis, timing and resource review before hardware use.
 
 ## Repository layout
 
