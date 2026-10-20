@@ -170,3 +170,15 @@ Interpretation limits:
 - Zero failures in 15 or 30 frames does not establish zero FER or a stringent FER target; the samples are exploratory.
 - All AWGN trials use the same known nonzero codeword with deterministic noise sequences. This is a useful smoke test, not a complete performance qualification across information frames, seeds, or implementation variants.
 - These are user-reported EDA Playground GHDL outcomes, not independent CI runs.
+
+
+## AWGN FER curve
+
+![Observed AWGN frame error rate](awgn-fer.svg)
+
+The figure plots the observed frame error rate (FER) from the user-reported runs listed above. The data are also available as [CSV](awgn-fer-results.csv) for plotting or further analysis.
+
+- Filled markers are completed runs; hollow markers with an asterisk are partial runs interrupted after 21 frames.
+- FER is the number of failed frames divided by the number of completed frames. A frame is failed if decoding did not converge or any information bit was incorrect.
+- Zero failures in a small sample do not imply zero FER. The connecting line is only a visual guide, not a fitted waterfall curve.
+- These are exploratory GHDL results on the fixed reference codeword, not statistically sufficient for decoder performance qualification.
