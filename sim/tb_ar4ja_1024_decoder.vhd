@@ -82,7 +82,28 @@ begin
     end loop;
 
     report "PASS: decoder corrects one corrupted information-bit LLR" severity note;
-    report "PASS: AR4JA decoder clean-frame and single-error tests completed" severity note;
+
+    -- Test 3: increase the challenge to four corrupted information-bit LLRs.
+    -- Keep bit 0 corrupted and also flip bits 1, 2 and 3.
+    wait until rising_edge(clk);
+    llr_in(1) <= to_signed(-8, 8);
+    llr_in(2) <= to_signed(-8, 8);
+    llr_in(3) <= to_signed(-8, 8);
+    start <= '1';
+    wait until rising_edge(clk);
+    start <= '0';
+
+    wait until done = '1';
+    assert status = AR4JA_STATUS_CONVERGED
+      report "four-LLR error pattern did not converge" severity failure;
+    for b in 0 to AR4JA_INFO_BITS - 1 loop
+      assert decoded_bits(b) = '0'
+        report "four-error frame: unexpected nonzero decoded bit at index " & integer'image(b)
+        severity failure;
+    end loop;
+
+    report "PASS: decoder corrects four corrupted information-bit LLRs" severity note;
+    report "PASS: AR4JA decoder clean-frame, single-error and four-error tests completed" severity note;
     clock_enable <= '0';
     wait;
   end process;
