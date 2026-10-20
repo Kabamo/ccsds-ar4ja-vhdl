@@ -2,6 +2,7 @@
 -- Structural self-check for k1024_r12 generated CCSDS AR4JA graph.
 library ieee; use ieee.std_logic_1164.all;
 use work.ar4ja_k1024_r12_graph_pkg.all;
+use work.ar4ja_k1024_r12_frame_pkg.all;
 entity tb_k1024_r12_graph is end entity;
 architecture test of tb_k1024_r12_graph is begin
  process
