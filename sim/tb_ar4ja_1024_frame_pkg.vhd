@@ -2,6 +2,7 @@
 -- Compile-time/frame-contract checks for the fixed AR4JA mode.
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 use work.ldpc_fixed_pkg.all;
 use work.ar4ja_1024_frame_pkg.all;
 
