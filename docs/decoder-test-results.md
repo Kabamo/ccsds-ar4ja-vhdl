@@ -66,6 +66,29 @@ GHDL run reported at 13:39 UTC:
 
 The clean all-zero codeword also passed. For this single deterministic position pattern, the observed transition lies between 288 (pass) and 320 (failure). This is not a universal error-correction threshold; randomized positions and additional codewords are still needed.
 
+### 2026-10-20 — reproducible pseudo-random error-position sweep
+
+GHDL run reported at 13:44 UTC:
+
+| Trial | Corrupted information-bit LLRs | Result |
+|---:|---:|---|
+| 1 | 32 | PASS |
+| 2 | 32 | PASS |
+| 3 | 32 | PASS |
+| 4 | 64 | PASS |
+| 5 | 64 | PASS |
+| 6 | 64 | PASS |
+| 7 | 128 | PASS |
+| 8 | 128 | PASS |
+| 9 | 128 | PASS |
+| 10 | 256 | PASS |
+| 11 | 256 | PASS |
+| 12 | 256 | PASS |
+
+The clean all-zero codeword passed before the sweep. All 12 fixed-seed pseudo-random position patterns decoded to the expected all-zero information bits. Each error count (32, 64, 128, 256) was tested three times. The simulation reported completion at 1,351,965 ns.
+
+These are repeatable, limited trials, not a statistically meaningful BER estimate. They still use the all-zero codeword and fixed LLR magnitudes (+20 for uncorrupted transmitted bits, -8 for corrupted information bits). Tests with nonzero valid codewords, additional seeds/error counts, and independent golden vectors remain outstanding.
+
 ### Previously reported component tests
 
 The user also reported PASS for:
