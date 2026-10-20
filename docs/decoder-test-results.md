@@ -11,7 +11,7 @@ This file records simulation results reported from GHDL runs in EDA Playground. 
 - LLR datapath: signed 8-bit
 - Baseline all-zero codeword: transmitted LLRs +20
 - Corrupted information-bit LLRs: -8; all other transmitted LLRs +20
-- The stress test uses a deterministic, well-spread set of information-bit positions: `(e * 157) mod 1024`. It does not randomize positions between trials.
+- The deterministic stress test uses positions `(e * 157) mod 1024`; randomized stress tests use reproducible pseudo-random unique positions.
 
 ## Results
 
@@ -64,30 +64,37 @@ GHDL run reported at 13:39 UTC:
 | 4 | PASS |
 | 1 | PASS |
 
-The clean all-zero codeword also passed. For this single deterministic position pattern, the observed transition lies between 288 (pass) and 320 (failure). This is not a universal error-correction threshold; randomized positions and additional codewords are still needed.
+The clean all-zero codeword also passed. For this single deterministic position pattern, the observed transition lies between 288 (pass) and 320 (failure). This is not a universal error-correction threshold.
 
-### 2026-10-20 — reproducible pseudo-random error-position sweep
+### 2026-10-20 — reproducible pseudo-random error-position sweep (12 trials)
 
 GHDL run reported at 13:44 UTC:
 
 | Trial | Corrupted information-bit LLRs | Result |
 |---:|---:|---|
-| 1 | 32 | PASS |
-| 2 | 32 | PASS |
-| 3 | 32 | PASS |
-| 4 | 64 | PASS |
-| 5 | 64 | PASS |
-| 6 | 64 | PASS |
-| 7 | 128 | PASS |
-| 8 | 128 | PASS |
-| 9 | 128 | PASS |
-| 10 | 256 | PASS |
-| 11 | 256 | PASS |
-| 12 | 256 | PASS |
+| 1–3 | 32 each | 3/3 PASS |
+| 4–6 | 64 each | 3/3 PASS |
+| 7–9 | 128 each | 3/3 PASS |
+| 10–12 | 256 each | 3/3 PASS |
 
-The clean all-zero codeword passed before the sweep. All 12 fixed-seed pseudo-random position patterns decoded to the expected all-zero information bits. Each error count (32, 64, 128, 256) was tested three times. The simulation reported completion at 1,351,965 ns.
+The clean all-zero codeword passed before the sweep. All 12 fixed-seed pseudo-random position patterns decoded to the expected all-zero information bits. The simulation reported completion at 1,351,965 ns.
 
-These are repeatable, limited trials, not a statistically meaningful BER estimate. They still use the all-zero codeword and fixed LLR magnitudes (+20 for uncorrupted transmitted bits, -8 for corrupted information bits). Tests with nonzero valid codewords, additional seeds/error counts, and independent golden vectors remain outstanding.
+### 2026-10-20 — expanded pseudo-random error-position sweep (25 trials)
+
+GHDL run reported at 13:46 UTC using `sim/tb_ar4ja_1024_random_sweep.vhd`:
+
+| Corrupted information-bit LLRs | Trials | Result |
+|---:|---:|---|
+| 64 | 5 | 5/5 PASS |
+| 128 | 5 | 5/5 PASS |
+| 256 | 5 | 5/5 PASS |
+| 288 | 5 | 5/5 PASS |
+| 320 | 5 | 5/5 PASS |
+| **Total** | **25** | **25/25 PASS** |
+
+The clean all-zero codeword passed first. The simulation reported completion at 5,315,105 ns. Each trial used a reproducible pseudo-random set of unique corrupted information-bit positions. Corrupted LLRs were -8 and all other transmitted LLRs +20. All trials decoded to the expected all-zero information bits.
+
+These 25 trials are encouraging, including the five trials at 320 errors, but they do not establish a guaranteed correction threshold or a statistically meaningful BER curve. They all use the all-zero codeword, fixed LLR magnitudes and a limited set of seeds/patterns.
 
 ### Previously reported component tests
 
@@ -100,8 +107,8 @@ The user also reported PASS for:
 
 ## Important interpretation limits
 
-- These results use the all-zero codeword and one deterministic error-position pattern. They are not a measured bit-error-rate curve and do not establish a universal correction threshold.
+- These are user-reported EDA Playground GHDL outcomes, not CI runs independently executed by the repository maintainer.
 - A PASS means the tested frame converged to the expected all-zero information bits for that specific test pattern and LLR magnitude.
-- The 512-error failure and 256-error success do not imply all patterns of 256 errors are correctable or all patterns of 512 errors fail.
-- The 448-, 384-, 320- and 288-error intermediate tests have now been run and recorded above.
-- Independent golden vectors, nonzero valid codewords, randomized error patterns, convergence-failure coverage, and Vivado synthesis/timing/resource checks remain outstanding.
+- Results do not establish that every pattern with the same number of errors will decode, nor that a higher count always fails.
+- The randomized trials remain a small stress sample, not a BER estimate.
+- Independent golden vectors, nonzero valid codewords, broader randomized testing, convergence-failure coverage, and Vivado synthesis/timing/resource checks remain outstanding.
