@@ -35,8 +35,8 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] Deterministic error-stress sweep (user-reported results: 512/448/384/320 failed to converge; 288 and below passed for the tested pattern)
 - [x] Initial reproducible pseudo-random sweep: 12/12 patterns passed for 32, 64, 128 and 256 errors (three trials per level; user-reported GHDL results)
 - [x] Expanded reproducible pseudo-random sweep: 25/25 patterns passed at 64, 128, 256, 288 and 320 errors (five trials per level; user-reported GHDL results)
-- [ ] Test nonzero valid codewords with independent golden vectors
-- [ ] Broader randomized testing and end-to-end golden vectors
+- [x] One nonzero valid codeword checked against an independent CCSDS TM2048 golden vector (user-reported GHDL PASS)
+- [ ] Additional golden vectors and broader randomized testing
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
 
@@ -85,6 +85,18 @@ Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to
 Keep the same four RTL files listed above in Design. Paste `sim/tb_ar4ja_1024_random_sweep.vhd` into Testbench and set the top-level entity to `tb_ar4ja_1024_random_sweep`. Run with GHDL.
 
 The test first checks a clean all-zero codeword, then runs five fixed-seed pseudo-random unique error-position patterns at each of 64, 128, 256, 288 and 320 corrupted information-bit LLRs. Corrupted LLRs are `-8`; all other transmitted LLRs are `+20`. The user reported **25/25 trials passing**, including 5/5 at 320 errors. Simulation completion was reported at 5,315,105 ns. These limited tests are not a BER estimate and do not prove a universal correction capability; nonzero valid codewords and independent golden vectors are still needed.
+
+## EDA Playground: independent nonzero CCSDS reference vector
+
+Keep the four RTL files listed in the decoder stress-sweep section in Design. Paste `sim/tb_ar4ja_1024_reference_vector.vhd` into Testbench and set the top-level entity to `tb_ar4ja_1024_reference_vector`. Run with GHDL.
+
+The test uses the nonzero TM2048 reference message with information bytes `00 01 02 ... 7F` and an independently sourced parity vector. The user reported:
+
+```text
+PASS: independent nonzero CCSDS TM2048 reference vector decoded
+```
+
+This validates one nonzero golden vector only; more vectors and broader testing are still needed.
 
 ## Simulation results log
 
