@@ -38,6 +38,7 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] One nonzero valid codeword checked against an independent CCSDS TM2048 golden vector (user-reported GHDL PASS)
 - [x] One corrupted information LLR corrected on an independent nonzero CCSDS TM2048 golden vector (user-reported GHDL PASS)
 - [x] Four corrupted information LLRs corrected on an independent nonzero CCSDS TM2048 golden vector (user-reported GHDL PASS)
+- [x] Reproducible AWGN channel testbench added (`sim/tb_ar4ja_1024_awgn.vhd`); simulation results still pending user execution
 - [ ] Additional golden vectors and broader randomized/channel testing
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
@@ -133,3 +134,29 @@ All user-reported GHDL outcomes and interpretation limits are recorded in [`docs
 - `rtl/`: synthesizable VHDL design sources
 - `sim/`: self-checking simulation testbenches
 - `docs/`: design notes and interface contracts
+
+
+## EDA Playground: AWGN channel test
+
+This testbench applies reproducible Gaussian noise to all 2048 transmitted bits of the independent CCSDS TM2048 reference codeword, quantizes soft information to signed 8-bit LLRs, runs the RTL decoder, and reports channel hard-decision errors, decoded information-bit errors, FER and BER.
+
+Add these files to Design in this order:
+1. `rtl/ldpc_fixed_pkg.vhd`
+2. `rtl/ar4ja_1024_frame_pkg.vhd`
+3. `rtl/ar4ja_1024_graph_pkg.vhd`
+4. `rtl/ar4ja_1024_decoder.vhd`
+
+Paste `sim/tb_ar4ja_1024_awgn.vhd` into Testbench and set the top-level entity to `tb_ar4ja_1024_awgn`. Use VHDL-2008 and GHDL. The testbench has generics:
+- `EBNO_DB`: default 3.0 dB.
+- `N_FRAMES`: default 2 frames.
+
+For the first run, keep the defaults. Then rerun at 2.0 dB and 4.0 dB, changing only `EBNO_DB`. If runtime permits, increase `N_FRAMES` to 10 or more per point. The random seed is fixed for reproducibility; the noise samples differ across frames.
+
+Channel assumptions:
+- BPSK: bit 0 maps to +1 and bit 1 maps to -1.
+- Rate (R=1/2), with noise variance `sigma^2 = 1/(2*R*Eb/N0)`.
+- The exact channel LLR is `2*y/sigma^2`; the testbench multiplies it by 4, rounds, and saturates to signed 8-bit.
+- Positive LLR favors bit 0, matching the RTL frame contract.
+- The transmitted frame is a valid published reference codeword, not a randomly generated information frame. This is sufficient for initial channel/decoder validation, but broader confidence should later use multiple codewords and many frames per SNR.
+
+A frame counts as a frame error if the decoder does not report convergence **or** any of the 1024 decoded information bits is wrong. A completed simulation is not automatically a passing result: inspect the per-frame lines and the final AWGN summary. These short runs are a smoke test, not enough to establish a statistically meaningful waterfall/FER curve.
