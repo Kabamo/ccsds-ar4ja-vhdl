@@ -1,0 +1,9 @@
+EbN0_dB,frames_completed,frame_failures,observed_FER_percent,run_complete
+1,20,19,95.0000,yes
+1.25,15,8,53.3333,yes
+1.5,21,5,23.8095,no
+1.55,15,2,13.3333,yes
+1.6,21,2,9.5238,no
+1.7,15,0,0.0000,yes
+2,30,0,0.0000,yes
+3,2,0,0.0000,yes
