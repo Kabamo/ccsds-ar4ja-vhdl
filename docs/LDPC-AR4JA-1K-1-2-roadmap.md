@@ -19,14 +19,14 @@ Do not clone the existing K=1024 rate-1/2 graph and merely change constants to c
 
 | K | Rate | Implementation status | Required next work |
 |---:|:---:|---|---|
-| 1024 | 1/2 | Prototype exists; user-reported simulations pass for several vectors and AWGN trials | Re-run all tests after fixed-width arithmetic changes; measure Vivado resources |
-| 1024 | 2/3 | Not implemented | Derive/check the exact standard graph, frame mapping and puncturing; generate independent vectors; RTL and tests |
-| 1024 | 4/5 | Not implemented | Same |
-| 4096 | 1/2 | Not implemented | Derive/check exact graph and frame mapping; scalable graph storage/scheduler; vectors and tests |
-| 4096 | 2/3 | Not implemented | Same |
-| 4096 | 4/5 | Not implemented | Same |
+| 1024 | 1/2 | Existing prototype preserved; named multimode graph/frame/decoder set added | Run six-mode regression, cross-check graph and independent vectors; Vivado |
+| 1024 | 2/3 | VHDL graph package, frame contract, decoder and graph/AWGN smoke benches added | GHDL regression, independent golden vectors, error-correction tests, Vivado |
+| 1024 | 4/5 | VHDL graph package, frame contract, decoder and graph/AWGN smoke benches added | GHDL regression, independent golden vectors, error-correction tests, Vivado |
+| 4096 | 1/2 | VHDL graph package, frame contract, decoder and graph/AWGN smoke benches added | GHDL regression, independent golden vectors, error-correction tests, Vivado |
+| 4096 | 2/3 | VHDL graph package, frame contract, decoder and graph/AWGN smoke benches added | GHDL regression, independent golden vectors, error-correction tests, Vivado |
+| 4096 | 4/5 | VHDL graph package, frame contract, decoder and graph/AWGN smoke benches added | GHDL regression, independent golden vectors, error-correction tests, Vivado |
 
-This table is deliberately conservative. Only the K=1024, rate-1/2 prototype currently exists in the repository.
+The RTL and benches are committed on this feature branch but have not been simulated in this environment because GHDL is unavailable here. Implementation files existing is not the same as validated IP.
 
 ## Existing architecture snapshot (K=1024, rate 1/2)
 
@@ -104,3 +104,10 @@ A frame error is counted if the decoder fails to converge **or** any information
 ## Naming
 
 Project title: **LDPC AR4JA 1K 1/2**. Repository slug currently remains `ccsds-ar4ja-vhdl`; the project title is used in the docs until repository renaming is performed separately.
+
+
+## Multimode branch update — 2026-10-20
+
+The branch now contains six named VHDL variants and generated sparse graph packages. The graph construction uses the CCSDS 131.0-B-5 permutation tables and rate-extension equations. The decoder passes only active row edges to the min-sum primitive; this is necessary for rate 2/3 and 4/5, whose row degree exceeds the six-edge rate-1/2 graph.
+
+Regression entry point: `bash scripts/run_multimode_smoke.sh`. It analyzes all six decoder entities and runs a graph structural bench and an all-zero-codeword AWGN smoke test for each mode. These are initial smoke tests only. The current environment has no GHDL executable, so no pass is claimed. Before calling the six modes validated, run this script, compare the generated K=1024 rate-1/2 graph against the preserved graph package, add independent nonzero CCSDS golden vectors for all six modes, run controlled-error and FER tests, and synthesize in Vivado.
