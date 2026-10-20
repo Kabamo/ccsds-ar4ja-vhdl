@@ -128,6 +128,17 @@ GHDL run reported at 13:54 UTC using `sim/tb_ar4ja_1024_reference_error.vhd`:
 
 This is a successful single-error correction check on a nonzero golden codeword. It is one controlled case and does not establish performance across arbitrary error patterns or channel conditions.
 
+
+### 2026-10-20 — four LLR errors corrected on nonzero golden vector
+
+GHDL run reported at 14:10 UTC using `sim/tb_ar4ja_1024_reference_four_errors.vhd`:
+
+- **PASS:** decoder corrected four corrupted LLRs on independent nonzero CCSDS TM2048 reference vector.
+- The signs of information-bit LLRs 0 through 3 were deliberately reversed, with magnitude 8; the remaining information and all parity LLRs retained the golden vector signs at magnitude 20.
+- The decoder converged and all 1024 output information bits matched the expected reference message.
+
+This is a four-error correction result for one controlled nonzero codeword and one specific error pattern. It does not establish general correction performance.
+
 ## Important interpretation limits
 
 - These are user-reported EDA Playground GHDL outcomes, not CI runs independently executed by the repository maintainer.
