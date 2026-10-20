@@ -129,6 +129,8 @@ All 1024 decoded information bits matched the expected reference message. This i
 
 All user-reported GHDL outcomes and interpretation limits are recorded in [`docs/decoder-test-results.md`](docs/decoder-test-results.md).
 
+The source-level cycle budget and 40 Mbit/s feasibility estimate are recorded in [`docs/throughput-budget.md`](docs/throughput-budget.md).
+
 ## Repository layout
 
 - `rtl/`: synthesizable VHDL design sources
