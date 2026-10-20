@@ -28,8 +28,9 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] Fixed-mode frame contract and testbench (user reported PASS in EDA Playground)
 - [x] Sparse AR4JA graph ROM generated for the fixed M=512 mode
 - [x] Graph structural testbench: row degrees, edge count, column degrees and puncturing identity (user reported PASS in EDA Playground)
-- [x] First sequential layered normalized-min-sum decoder RTL prototype (not yet simulation-validated)
-- [ ] Decoder smoke test and end-to-end golden vectors / error-correction tests
+- [x] First sequential layered normalized-min-sum decoder RTL prototype
+- [x] Decoder smoke test: all-zero codeword converges and all 1024 decoded information bits are checked (user reported PASS in EDA Playground)
+- [ ] Error-correction tests with deliberately corrupted LLRs and end-to-end golden vectors
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
 
@@ -75,7 +76,7 @@ Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to
 
 Expected report: `PASS: AR4JA decoder converges on the all-zero codeword`.
 
-This is only a smoke test: it checks control flow and zero-syndrome convergence, not error correction under noisy/corrupted input. The initial RTL uses a simple row-sequential memory model and needs simulation, synthesis, timing and resource review before hardware use.
+User-reported GHDL result: `PASS: AR4JA decoder converges on the all-zero codeword` at 30755 ns. This is only a smoke test: it checks control flow and zero-syndrome convergence, not error correction under noisy/corrupted input. The initial RTL uses a simple row-sequential memory model and needs simulation, synthesis, timing and resource review before hardware use.
 
 ## Repository layout
 
