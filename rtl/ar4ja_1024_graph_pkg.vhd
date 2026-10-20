@@ -1558,7 +1558,7 @@ package ar4ja_1024_graph_pkg is
   );
 
   function ar4ja_row_degree(row_index : natural) return natural;
-  function ar4ja_row_col(row_index : natural; edge_index : natural) return integer;
+  function ar4ja_row_col(row_index : natural; edge_index : natural) return ar4ja_graph_col_t;
 end package ar4ja_1024_graph_pkg;
 
 package body ar4ja_1024_graph_pkg is
@@ -1568,7 +1568,7 @@ package body ar4ja_1024_graph_pkg is
     return AR4JA_ROW_DEGREES(row_index);
   end function;
 
-  function ar4ja_row_col(row_index : natural; edge_index : natural) return integer is
+  function ar4ja_row_col(row_index : natural; edge_index : natural) return ar4ja_graph_col_t is
   begin
     assert row_index < AR4JA_GRAPH_ROWS report "AR4JA row index out of range" severity failure;
     assert edge_index < AR4JA_GRAPH_MAX_ROW_DEGREE report "AR4JA edge index out of range" severity failure;
