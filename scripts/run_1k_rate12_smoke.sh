@@ -62,4 +62,4 @@ fi
 
 echo
 echo "PASS: all selected K=1024 rate-1/2 smoke tests completed."
-echo "NOTE: this script does not test the five not-yet-implemented configurations."
+echo "NOTE: this script tests only the baseline K=1024 rate-1/2 prototype; use scripts/run_multimode_smoke.sh for all six configurations."
