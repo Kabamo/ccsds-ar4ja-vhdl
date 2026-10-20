@@ -105,6 +105,10 @@ begin
 
     -- Start very aggressively, then automatically reduce the error count if needed.
     run_error_case(512);
+    run_error_case(448);
+    run_error_case(384);
+    run_error_case(320);
+    run_error_case(288);
     run_error_case(256);
     run_error_case(128);
     run_error_case(64);
