@@ -117,6 +117,7 @@ begin
     variable pass_count : natural := 0;
     variable fail_count : natural := 0;
     variable total_count : natural := 0;
+    variable clean_frame : ar4ja_llr_frame_t;
 
     procedure build_reference_frame(variable frame : out ar4ja_llr_frame_t) is
       variable expected_bit : std_logic;
@@ -222,12 +223,8 @@ begin
     rst <= '0';
 
     -- First verify the clean nonzero golden vector.
-    declare
-      variable clean_frame : ar4ja_llr_frame_t;
-    begin
-      build_reference_frame(clean_frame);
-      llr_in <= clean_frame;
-    end;
+    build_reference_frame(clean_frame);
+    llr_in <= clean_frame;
     wait until rising_edge(clk);
     start <= '1';
     wait until rising_edge(clk);
