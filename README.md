@@ -15,26 +15,29 @@ VHDL-2008 implementation work targeting a Zynq UltraScale+ FPGA.
 This repository is being built incrementally, with simulation checks before adding the next block.
 
 - [x] Fixed-point helper package: saturation, magnitude and 3/4 normalization
-- [x] Self-checking testbench for the helper package
+- [x] Check-node normalized min-sum function (two minima, extrinsic sign, 3/4 scaling)
+- [x] Self-checking tests for fixed-point arithmetic and check-node cases
 - [ ] CCSDS AR4JA parity-check graph and schedule
 - [ ] Layered min-sum decoder core
 - [ ] AXI-Stream wrapper
 - [ ] End-to-end reference vectors and Vivado resource/timing checks
 
-The fixed-point helper package is an independent implementation. Arithmetic behavior must be checked against the intended decoder specification before it is used in the complete datapath.
+The arithmetic and check-node functions are an independent implementation. The testbench checks selected corner cases; the package has not yet been validated against an independent golden model or synthesized in Vivado.
 
-## First simulation: EDA Playground
+## Simulation: EDA Playground
 
-The small package testbench can be run at [EDA Playground](https://www.edaplayground.com/), an online HDL simulator.
+Use [EDA Playground](https://www.edaplayground.com/) for quick functional checks.
 
 1. Select **VHDL** for both design and testbench.
-2. Select a simulator that supports **VHDL-2008** (for example, GHDL if available).
-3. Paste `rtl/ldpc_fixed_pkg.vhd` into the design editor.
-4. Paste `sim/tb_ldpc_fixed_pkg.vhd` into the testbench editor.
-5. Set the top-level testbench entity to `tb_ldpc_fixed_pkg`, enable VHDL-2008 if the option is exposed, then click **Run**.
-6. Expected output includes `PASS: ldpc_fixed_pkg checks completed`. Any failed assertion stops the test.
+2. Paste the full content of `rtl/ldpc_fixed_pkg.vhd` into the Design editor.
+3. Paste the full content of `sim/tb_ldpc_fixed_pkg.vhd` into the Testbench editor.
+4. Set the top-level entity to `tb_ldpc_fixed_pkg`.
+5. Run with GHDL. The package must be analyzed before the testbench.
 
-Compile order matters: the package must be analyzed before the testbench. The online playground is for quick functional checks; later we should also run GHDL locally and synthesize the full design in Vivado.
+Expected report after all assertions pass:
+`PASS: ldpc_fixed_pkg and check-node tests completed`
+
+If EDA Playground reports that `std.env` is missing, make sure the testbench version pasted from this repository is used; this testbench does not depend on `std.env`.
 
 ## Repository layout
 
