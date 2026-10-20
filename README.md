@@ -32,7 +32,8 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] Decoder smoke test: all-zero codeword converges and all 1024 decoded information bits are checked (user reported PASS in EDA Playground)
 - [x] Single-LLR error-correction test (user reported GHDL PASS)
 - [x] Four-LLR error-correction test (user reported GHDL PASS)
-- [ ] Descending decoder stress sweep: 64, 32, 16, 8, 4 and 1 deterministic LLR errors (testbench committed; awaiting GHDL run)
+- [x] Descending decoder stress sweep: 64, 32, 16, 8, 4 and 1 deterministic LLR errors (user reported GHDL PASS at every level)
+- [ ] Extended stress sweep: 512, 256 and 128 deterministic LLR errors (testbench to be run)
 - [ ] Broader multi-error sweeps and end-to-end golden vectors
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
@@ -75,12 +76,12 @@ Add these files to Design in this order:
 3. `rtl/ar4ja_1024_graph_pkg.vhd`
 4. `rtl/ar4ja_1024_decoder.vhd`
 
-Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to `tb_ar4ja_1024_decoder`. Run with GHDL. The test first sends a clean all-zero codeword, then tests deterministic, well-spread error patterns with 64, 32, 16, 8, 4 and 1 corrupted information-bit LLRs. Corrupted LLRs are `-8`; all other transmitted LLRs are `+20`. The sweep continues after a stress-case failure, reporting PASS or STRESS RESULT for each count, so one difficult case does not hide results for the smaller cases.
+Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to `tb_ar4ja_1024_decoder`. Run with GHDL. The test first sends a clean all-zero codeword, then tests deterministic, well-spread error patterns with 512, 256, 128, 64, 32, 16, 8, 4 and 1 corrupted information-bit LLRs. Corrupted LLRs are `-8`; all other transmitted LLRs are `+20`. The sweep continues after a stress-case failure, reporting PASS or STRESS RESULT for each count, so one difficult case does not hide results for the smaller cases.
 
 Expected reports:
 - `PASS: clean all-zero codeword`
 - `PASS: decoder corrected 64 deterministic information-bit LLR errors` (or a `STRESS RESULT` warning if not recovered)
-- Equivalent PASS/STRESS RESULT for 32, 16, 8, 4 and 1 errors
+- Equivalent PASS/STRESS RESULT for 256, 128, 64, 32, 16, 8, 4 and 1 errors
 - `PASS: AR4JA decoder clean-frame and descending error-stress sweep completed`
 
 The user reported GHDL PASS for the clean-frame, single-LLR and four-LLR cases before the stress sweep was added. This remains an early algorithm test: randomized error patterns and independent golden vectors are required, and the RTL needs synthesis, timing and resource review before hardware use.
