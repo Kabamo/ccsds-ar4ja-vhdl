@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # AWGN sweep for the only implemented mode: K=1024, rate 1/2.
-# Example: EBNO_POINTS="1.5 1.6 1.7 1.8" N_FRAMES=20 ./scripts/run_awgn_1k_rate12.sh
+# Example: EBNO_POINTS="1.5 1.6 1.7 1.8" N_FRAMES=20 bash scripts/run_awgn_1k_rate12.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -34,6 +34,17 @@ echo "This script is intentionally limited to the currently implemented mode."
 for point in $POINTS; do
   echo
   echo "===== Eb/N0=$point dB, frames=$FRAMES ====="
-  "$GHDL" -r "$STD" --workdir="$WORK" tb_ar4ja_1024_awgn \
-    -gEBNO_DB="$point" -gN_FRAMES="$FRAMES" --assert-level=error
+  log="$WORK/awgn-${point}.log"
+  if ! "$GHDL" -r "$STD" --workdir="$WORK" tb_ar4ja_1024_awgn \
+    -gEBNO_DB="$point" -gN_FRAMES="$FRAMES" --assert-level=error 2>&1 | tee "$log"; then
+    echo "ERROR: GHDL failed at Eb/N0=$point dB." >&2
+    exit 1
+  fi
+  if ! grep -q "PASS: all AWGN frames decoded correctly at requested Eb/N0" "$log"; then
+    echo "ERROR: AWGN failures or missing PASS marker at Eb/N0=$point dB." >&2
+    exit 1
+  fi
 done
+
+echo
+echo "PASS: all requested AWGN points passed for K=1024, rate 1/2."
