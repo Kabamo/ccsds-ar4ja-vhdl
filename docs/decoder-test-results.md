@@ -146,3 +146,27 @@ This is a four-error correction result for one controlled nonzero codeword and o
 - Results do not establish that every pattern with the same number of errors will decode, nor that a higher count always fails.
 - The randomized trials remain a small stress sample, not a BER estimate.
 - Additional golden vectors, multi-error tests on nonzero codewords, broader randomized/channel testing, convergence-failure coverage, and Vivado synthesis/timing/resource checks remain outstanding.
+
+
+### 2026-10-20 — AWGN smoke tests on the independent nonzero reference codeword
+
+The user reported these GHDL runs using `sim/tb_ar4ja_1024_awgn.vhd`, signed 8-bit LLRs, `LLR_SCALE=4.0`, and a fixed pseudo-random seed. A frame is counted as failed if it does not converge or any information bit is incorrect.
+
+| Eb/N0 | Completed frames | Frame failures | Observed FER | Run status |
+|---:|---:|---:|---:|---|
+| 1.0 dB | 20 | 19 | 95.0% | Complete |
+| 1.25 dB | 15 | 8 | 53.3% | Complete |
+| 1.5 dB | 21 | 5 | 23.8% | Interrupted before 30 planned frames (exit 137) |
+| 1.55 dB | 15 | 2 | 13.3% | Complete |
+| 1.6 dB | 21 | 2 | 9.5% | Interrupted before 30 planned frames (exit 137) |
+| 1.7 dB | 15 | 0 | 0% | Complete |
+| 2.0 dB | 30 | 0 | 0% | Complete |
+| 3.0 dB | 2 | 0 | 0% | Initial smoke test |
+
+The observed channel hard-decision BER was approximately 13.2% at 1 dB, 12.5% at 1.25 dB, 11.6% at 1.55 dB, 11.1% at 1.7 dB, and 10.47% at 2 dB. At 2 dB, all 30 frames decoded to the exact expected 1024 information bits despite about 214 channel hard-decision errors per frame on average.
+
+Interpretation limits:
+- The 1.5 dB and 1.6 dB values use only the 21 completed frames and are partial runs, not the planned 30-frame samples.
+- Zero failures in 15 or 30 frames does not establish zero FER or a stringent FER target; the samples are exploratory.
+- All AWGN trials use the same known nonzero codeword with deterministic noise sequences. This is a useful smoke test, not a complete performance qualification across information frames, seeds, or implementation variants.
+- These are user-reported EDA Playground GHDL outcomes, not independent CI runs.
