@@ -1,40 +1,59 @@
 # CCSDS AR4JA LDPC decoder in VHDL
 
-VHDL implementation work targeting a Zynq UltraScale+ FPGA.
+Independent VHDL implementation targeting a Zynq UltraScale+ FPGA.
 
-## Target configuration
+## Fixed target mode
 
 - CCSDS AR4JA, information length K = 1024
 - Code rate 1/2
+- 2048 transmitted LLRs per frame
+- 512 punctured internal variables, initialized with neutral LLR = 0
+- 2560 internal variable nodes and 1536 parity checks
 - 8-bit signed LLR/message datapath
 - Normalized min-sum algorithm, normalization factor 3/4
 - Intended integration target: Vivado / Zynq UltraScale+
 
+## User-facing frame contract
+
+The target interface is one complete 2048-LLR input frame and one 1024-bit systematic information output frame. Positive LLR favors bit 0; negative LLR favors bit 1. The first array element represents transmitted CCSDS Bit 0. CRC processing is deliberately outside the LDPC decoder: the caller must specify which information bits contain CRC and remove them after decoding.
+
+The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd`. This is an interface contract only; it is not yet an operational decoder.
+
 ## Current status
 
 - [x] Fixed-point helpers: saturation, magnitude, normalization and arithmetic
-- [x] Check-node normalized min-sum update (two minima, extrinsic sign, 3/4 scaling)
-- [x] Variable-node extrinsic and posterior LLR updates
-- [x] Self-checking testbench for the above primitives
-- [ ] Independent golden-model comparison and broader randomized tests
-- [ ] CCSDS AR4JA parity-check graph and schedule
-- [ ] Iterative decoder core
-- [ ] AXI-Stream wrapper
-- [ ] End-to-end reference vectors and Vivado resource/timing checks
+- [x] Check-node normalized min-sum primitive
+- [x] Variable-node extrinsic and posterior primitives
+- [x] Self-checking primitive testbench (user reported PASS in EDA Playground)
+- [x] Fixed-mode frame contract: dimensions, LLR sign convention, array ordering, decode status enum
+- [x] Frame-contract testbench added (awaiting user simulation)
+- [ ] Normative CCSDS AR4JA graph/permutation generation and independent structural checks
+- [ ] Message memory and iterative decoder datapath/control
+- [ ] End-to-end golden vectors and correction tests
+- [ ] Frame-level RTL interface and CRC placement integration
+- [ ] Vivado synthesis, timing, and resource checks
 
-The current testbench has passed in the user's EDA Playground run for the earlier check-node version. The newly added variable-node tests have **not yet been run**. Arithmetic conventions and all primitives still need validation against an independent reference model before being treated as a complete decoder.
+The validated primitives are not yet a functioning decoder. Do not treat the frame contract package as a decoder core.
 
-## Simulation: EDA Playground
+## EDA Playground: primitive tests
 
-1. Paste the full content of `rtl/ldpc_fixed_pkg.vhd` into the Design editor.
-2. Paste the full content of `sim/tb_ldpc_fixed_pkg.vhd` into the Testbench editor.
-3. Set the top-level entity to `tb_ldpc_fixed_pkg`.
-4. Compile the package before the testbench and run.
+1. Paste `rtl/ldpc_fixed_pkg.vhd` into Design and `sim/tb_ldpc_fixed_pkg.vhd` into Testbench.
+2. Set top-level entity to `tb_ldpc_fixed_pkg`.
+3. Compile and run with GHDL.
 
-Expected report after the updated tests pass:
-`PASS: fixed-point, check-node and variable-node tests completed`
+Expected report: `PASS: fixed-point, check-node and variable-node tests completed`.
+
+## EDA Playground: frame contract test
+
+1. Paste `rtl/ldpc_fixed_pkg.vhd` and `rtl/ar4ja_1024_frame_pkg.vhd` into Design, in that order.
+2. Paste `sim/tb_ar4ja_1024_frame_pkg.vhd` into Testbench.
+3. Set top-level entity to `tb_ar4ja_1024_frame_pkg`.
+4. Compile and run with GHDL.
+
+Expected report: `PASS: AR4JA K=1024 rate-1/2 frame contract completed`.
 
 ## Repository layout
 
 - `rtl/`: synthesizable VHDL design sources
 - `sim/`: self-checking simulation testbenches
+- `docs/`: design notes and interface contracts
