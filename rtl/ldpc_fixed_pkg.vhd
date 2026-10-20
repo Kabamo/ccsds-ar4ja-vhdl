@@ -116,13 +116,15 @@ package body ldpc_fixed_pkg is
     inputs  : in  llr_array_t;
     outputs : out llr_array_t
   ) is
-    variable min1            : integer := 128;
-    variable min2            : integer := 128;
+    -- The decoder's maximum check-node degree is six. Explicit ranges keep
+    -- these temporaries narrow instead of carrying unconstrained integer widths.
+    variable min1            : integer range 0 to 128 := 128;
+    variable min2            : integer range 0 to 128 := 128;
     variable min1_index      : integer := -1;
-    variable magnitude       : integer;
-    variable selected_min    : integer;
-    variable scaled_min      : integer;
-    variable negative_count  : integer := 0;
+    variable magnitude       : integer range 0 to 127;
+    variable selected_min    : integer range 0 to 128;
+    variable scaled_min      : integer range 0 to 96;
+    variable negative_parity : std_logic := '0';
     variable output_negative : boolean;
   begin
     if inputs'length < 2 then
@@ -135,7 +137,7 @@ package body ldpc_fixed_pkg is
     for i in inputs'range loop
       magnitude := to_integer(llr_magnitude(inputs(i)));
       if inputs(i) < to_signed(0, inputs(i)'length) then
-        negative_count := negative_count + 1;
+        negative_parity := not negative_parity;
       end if;
 
       if magnitude < min1 then
@@ -155,7 +157,7 @@ package body ldpc_fixed_pkg is
       end if;
 
       scaled_min := to_integer(normalize_3_4(to_unsigned(selected_min, 7)));
-      output_negative := ((negative_count mod 2) /= 0);
+      output_negative := (negative_parity = '1');
       if inputs(i) < to_signed(0, inputs(i)'length) then
         output_negative := not output_negative;
       end if;
