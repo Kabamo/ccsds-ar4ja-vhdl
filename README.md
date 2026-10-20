@@ -31,7 +31,7 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] First sequential layered normalized-min-sum decoder RTL prototype
 - [x] Decoder smoke test: all-zero codeword converges and all 1024 decoded information bits are checked (user reported PASS in EDA Playground)
 - [x] Single-LLR error-correction test (user reported GHDL PASS)
-- [ ] Four-LLR error-correction test (testbench added; awaiting user-reported GHDL PASS)
+- [x] Four-LLR error-correction test (user reported GHDL PASS)
 - [ ] Broader multi-error sweeps and end-to-end golden vectors
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
@@ -82,7 +82,7 @@ Expected reports:
 - `PASS: decoder corrects four corrupted information-bit LLRs`
 - `PASS: AR4JA decoder clean-frame, single-error and four-error tests completed`
 
-The user reported PASS for both the clean-frame and single-LLR tests. The four-error case is newly added and awaits a GHDL run. This remains an early algorithm test: broader error patterns and golden vectors are required, and the RTL needs synthesis, timing and resource review before hardware use.
+The user reported GHDL PASS for the clean-frame, single-LLR and four-LLR cases. This remains an early algorithm test: broader error patterns and golden vectors are required, and the RTL needs synthesis, timing and resource review before hardware use.
 
 ## Repository layout
 
