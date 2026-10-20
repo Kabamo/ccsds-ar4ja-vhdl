@@ -9,7 +9,7 @@ cd "$ROOT"
 GHDL="${GHDL:-ghdl}"
 STD="--std=08"
 command -v "$GHDL" >/dev/null 2>&1 || { echo "ERROR: GHDL not found" >&2; exit 127; }
-echo "GHDL: $(" $GHDL" --version | head -n 1)"
+echo "GHDL: $("$GHDL" --version | head -n 1)"
 "$GHDL" -a "$STD" --workdir="$WORK" rtl/ldpc_fixed_pkg.vhd
 for tag in k1024_r12 k1024_r23 k1024_r45 k4096_r12 k4096_r23 k4096_r45; do
   "$GHDL" -a "$STD" --workdir="$WORK" "rtl/ar4ja_${tag}_frame_pkg.vhd"
