@@ -117,10 +117,21 @@ GHDL run reported at 13:50 UTC using `sim/tb_ar4ja_1024_reference_vector.vhd`:
 
 This is an important end-to-end check beyond the all-zero codeword: it exercises a nonzero valid codeword and independently sourced parity bits. It is still one golden vector, not broad proof of correctness or BER performance.
 
+
+### 2026-10-20 — single LLR error corrected on nonzero golden vector
+
+GHDL run reported at 13:54 UTC using `sim/tb_ar4ja_1024_reference_error.vhd`:
+
+- **PASS:** decoder corrected one corrupted LLR on independent nonzero CCSDS TM2048 reference vector.
+- The reference information bit 0 is expected to be 0, but its input LLR was deliberately changed to `-8`; the remaining information and parity LLRs retained their reference signs at magnitude 20.
+- The decoder converged and all 1024 output information bits matched the reference message.
+
+This is a successful single-error correction check on a nonzero golden codeword. It is one controlled case and does not establish performance across arbitrary error patterns or channel conditions.
+
 ## Important interpretation limits
 
 - These are user-reported EDA Playground GHDL outcomes, not CI runs independently executed by the repository maintainer.
 - A PASS means the tested frame converged to the expected all-zero information bits for that specific test pattern and LLR magnitude.
 - Results do not establish that every pattern with the same number of errors will decode, nor that a higher count always fails.
 - The randomized trials remain a small stress sample, not a BER estimate.
-- Additional independent golden vectors, broader randomized testing, convergence-failure coverage, and Vivado synthesis/timing/resource checks remain outstanding.
+- Additional golden vectors, multi-error tests on nonzero codewords, broader randomized/channel testing, convergence-failure coverage, and Vivado synthesis/timing/resource checks remain outstanding.
