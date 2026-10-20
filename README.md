@@ -34,7 +34,8 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] Four-LLR error-correction test (user reported GHDL PASS)
 - [x] Descending decoder stress sweep: 64, 32, 16, 8, 4 and 1 deterministic LLR errors (user reported GHDL PASS at every level)
 - [x] Extended deterministic sweep: 512, 448, 384 and 320 errors reached max iterations; 288, 256, 128, 64, 32, 16, 8, 4 and 1 passed (user-reported GHDL results)
-- [ ] Test multiple reproducible pseudo-random error patterns and broaden the sweep
+- [x] Initial reproducible pseudo-random sweep: 12/12 patterns passed for 32, 64, 128 and 256 errors (three trials per level; user-reported GHDL results)
+- [ ] Broaden pseudo-random trials and test nonzero valid codewords with independent golden vectors
 - [ ] Broader multi-error sweeps and end-to-end golden vectors
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
@@ -85,7 +86,7 @@ Expected reports:
 - Equivalent PASS/STRESS RESULT for 448, 384, 320, 288, 256, 128, 64, 32, 16, 8, 4 and 1 errors
 - `PASS: AR4JA decoder clean-frame and descending error-stress sweep completed`
 
-The user reported GHDL PASS for the clean-frame, single-LLR and four-LLR cases before the stress sweep was added. This remains an early algorithm test: randomized error patterns and independent golden vectors are required, and the RTL needs synthesis, timing and resource review before hardware use.
+The user reported GHDL PASS for the clean-frame, single-LLR and four-LLR cases before the stress sweep was added. A separate fixed-seed pseudo-random position testbench subsequently passed 12/12 trials at 32, 64, 128 and 256 corrupted information-bit LLRs (three trials per level); details are in the simulation results log. This remains an early algorithm test: randomized error patterns and independent golden vectors are required, and the RTL needs synthesis, timing and resource review before hardware use.
 
 ## Simulation results log
 
