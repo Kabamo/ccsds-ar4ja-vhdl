@@ -103,7 +103,10 @@ begin
     end loop;
     report "PASS: clean all-zero codeword" severity note;
 
-    -- Start aggressively, then automatically reduce the error count if needed.
+    -- Start very aggressively, then automatically reduce the error count if needed.
+    run_error_case(512);
+    run_error_case(256);
+    run_error_case(128);
     run_error_case(64);
     run_error_case(32);
     run_error_case(16);
