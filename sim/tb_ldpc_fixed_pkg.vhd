@@ -51,7 +51,7 @@ begin
     incoming(0) := to_signed(10, 8);
     incoming(1) := to_signed(-20, 8);
     incoming(2) := to_signed(30, 8);
-    outgoing := check_node_min_sum(incoming);
+    check_node_min_sum(incoming, outgoing);
     assert to_integer(outgoing(0)) = -15
       report "check-node output 0 failed" severity failure;
     assert to_integer(outgoing(1)) = 7
@@ -63,7 +63,7 @@ begin
     incoming(0) := to_signed(-8, 8);
     incoming(1) := to_signed(-12, 8);
     incoming(2) := to_signed(-20, 8);
-    outgoing := check_node_min_sum(incoming);
+    check_node_min_sum(incoming, outgoing);
     assert to_integer(outgoing(0)) = 9
       report "all-negative check-node output 0 failed" severity failure;
     assert to_integer(outgoing(1)) = 6
@@ -75,7 +75,7 @@ begin
     incoming(0) := to_signed(5, 8);
     incoming(1) := to_signed(5, 8);
     incoming(2) := to_signed(9, 8);
-    outgoing := check_node_min_sum(incoming);
+    check_node_min_sum(incoming, outgoing);
     assert to_integer(outgoing(0)) = 3 and
            to_integer(outgoing(1)) = 3 and
            to_integer(outgoing(2)) = 3
@@ -83,7 +83,7 @@ begin
 
     -- A degree-one check has no extrinsic minimum; define output as zero.
     singleton(0) := to_signed(-17, 8);
-    singleton_out := check_node_min_sum(singleton);
+    check_node_min_sum(singleton, singleton_out);
     assert to_integer(singleton_out(0)) = 0
       report "degree-one check-node fallback failed" severity failure;
 
