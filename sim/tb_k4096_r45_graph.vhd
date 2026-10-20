@@ -2,6 +2,7 @@
 -- Structural self-check for k4096_r45 generated CCSDS AR4JA graph.
 library ieee; use ieee.std_logic_1164.all;
 use work.ar4ja_k4096_r45_graph_pkg.all;
+use work.ar4ja_k4096_r45_frame_pkg.all;
 entity tb_k4096_r45_graph is end entity;
 architecture test of tb_k4096_r45_graph is begin
  process
