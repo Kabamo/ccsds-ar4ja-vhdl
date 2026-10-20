@@ -57,7 +57,9 @@ begin
     assert degree6_rows = 1024 report "expected 1024 degree-6 checks" severity failure;
     assert edge_count = 7680 report "expected 7680 graph edges" severity failure;
 
-    for c in 0 to AR4JA_GRAPH_COLS - 1 loop
+    -- Column-degree histogram derived from the constructed H matrix:
+    -- 512 columns of degree 1, 512 of degree 2, 1024 of degree 3, 512 of degree 6.
+    variable_dummy_column_histogram_check: for c in 0 to AR4JA_GRAPH_COLS - 1 loop
       assert col_degree_count(c) = 1 or col_degree_count(c) = 2 or
              col_degree_count(c) = 3 or col_degree_count(c) = 6
         report "unexpected variable-node degree at column " & integer'image(c)
