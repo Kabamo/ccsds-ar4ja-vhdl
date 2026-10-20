@@ -1,5 +1,5 @@
 -- SPDX-License-Identifier: MIT
--- Self-checking testbench for ldpc_fixed_pkg.
+-- Self-checking testbench for fixed-point, check-node and variable-node primitives.
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -15,6 +15,8 @@ begin
     variable outgoing : llr_array_t(0 to 2);
     variable singleton : llr_array_t(0 to 0);
     variable singleton_out : llr_array_t(0 to 0);
+    variable check_msgs : llr_array_t(0 to 2);
+    variable extrinsic_msgs : llr_array_t(0 to 2);
   begin
     -- Fixed-point helpers
     assert to_integer(sat_llr(0)) = 0
@@ -47,7 +49,7 @@ begin
     assert to_integer(sat_sub(to_signed(100, 8), to_signed(-50, 8))) = 127
       report "saturating subtraction positive overflow failed" severity failure;
 
-    -- Mixed signs and distinct minima: (+10, -20, +30) -> (-15, +7, -7).
+    -- Check-node: mixed signs and distinct minima.
     incoming(0) := to_signed(10, 8);
     incoming(1) := to_signed(-20, 8);
     incoming(2) := to_signed(30, 8);
@@ -59,7 +61,7 @@ begin
     assert to_integer(outgoing(2)) = -7
       report "check-node output 2 failed" severity failure;
 
-    -- Three negative inputs: each outgoing sign is positive.
+    -- Three negative inputs.
     incoming(0) := to_signed(-8, 8);
     incoming(1) := to_signed(-12, 8);
     incoming(2) := to_signed(-20, 8);
@@ -71,7 +73,7 @@ begin
     assert to_integer(outgoing(2)) = 6
       report "all-negative check-node output 2 failed" severity failure;
 
-    -- Equal minima must be handled correctly for every edge.
+    -- Equal minima.
     incoming(0) := to_signed(5, 8);
     incoming(1) := to_signed(5, 8);
     incoming(2) := to_signed(9, 8);
@@ -81,13 +83,39 @@ begin
            to_integer(outgoing(2)) = 3
       report "equal-minimum check-node case failed" severity failure;
 
-    -- A degree-one check has no extrinsic minimum; define output as zero.
     singleton(0) := to_signed(-17, 8);
     check_node_min_sum(singleton, singleton_out);
     assert to_integer(singleton_out(0)) = 0
       report "degree-one check-node fallback failed" severity failure;
 
-    report "PASS: ldpc_fixed_pkg and check-node tests completed" severity note;
+    -- Variable-node extrinsic values:
+    -- channel=10, messages=(-3,5,20) -> (35,27,12); posterior=32.
+    check_msgs(0) := to_signed(-3, 8);
+    check_msgs(1) := to_signed(5, 8);
+    check_msgs(2) := to_signed(20, 8);
+    variable_node_extrinsic(to_signed(10, 8), check_msgs, extrinsic_msgs);
+    assert to_integer(extrinsic_msgs(0)) = 35
+      report "variable-node extrinsic 0 failed" severity failure;
+    assert to_integer(extrinsic_msgs(1)) = 27
+      report "variable-node extrinsic 1 failed" severity failure;
+    assert to_integer(extrinsic_msgs(2)) = 12
+      report "variable-node extrinsic 2 failed" severity failure;
+    assert to_integer(variable_node_posterior(to_signed(10, 8), check_msgs)) = 32
+      report "variable-node posterior failed" severity failure;
+
+    -- Extrinsic accumulation saturates only after summing all contributors.
+    check_msgs(0) := to_signed(20, 8);
+    check_msgs(1) := to_signed(30, 8);
+    check_msgs(2) := to_signed(-5, 8);
+    variable_node_extrinsic(to_signed(120, 8), check_msgs, extrinsic_msgs);
+    assert to_integer(extrinsic_msgs(0)) = 127
+      report "variable-node positive saturation failed" severity failure;
+    assert to_integer(extrinsic_msgs(1)) = 127
+      report "variable-node second positive saturation failed" severity failure;
+    assert to_integer(extrinsic_msgs(2)) = 127
+      report "variable-node third positive saturation failed" severity failure;
+
+    report "PASS: fixed-point, check-node and variable-node tests completed" severity note;
     wait;
   end process;
 end architecture;
