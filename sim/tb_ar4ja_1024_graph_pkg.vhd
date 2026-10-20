@@ -17,6 +17,10 @@ begin
     variable edge_count : natural := 0;
     variable current_col : integer;
     variable previous_col : integer;
+    variable col_degree1 : natural := 0;
+    variable col_degree2 : natural := 0;
+    variable col_degree3 : natural := 0;
+    variable col_degree6 : natural := 0;
   begin
     assert AR4JA_GRAPH_ROWS = 1536 severity failure;
     assert AR4JA_GRAPH_COLS = 2560 severity failure;
@@ -59,12 +63,21 @@ begin
 
     -- Column-degree histogram derived from the constructed H matrix:
     -- 512 columns of degree 1, 512 of degree 2, 1024 of degree 3, 512 of degree 6.
-    variable_dummy_column_histogram_check: for c in 0 to AR4JA_GRAPH_COLS - 1 loop
-      assert col_degree_count(c) = 1 or col_degree_count(c) = 2 or
-             col_degree_count(c) = 3 or col_degree_count(c) = 6
-        report "unexpected variable-node degree at column " & integer'image(c)
-        severity failure;
+    for c in 0 to AR4JA_GRAPH_COLS - 1 loop
+      case col_degree_count(c) is
+        when 1 => col_degree1 := col_degree1 + 1;
+        when 2 => col_degree2 := col_degree2 + 1;
+        when 3 => col_degree3 := col_degree3 + 1;
+        when 6 => col_degree6 := col_degree6 + 1;
+        when others =>
+          assert false
+            report "unexpected variable-node degree at column " & integer'image(c)
+            severity failure;
+      end case;
     end loop;
+    assert col_degree1 = 512 and col_degree2 = 512 and
+           col_degree3 = 1024 and col_degree6 = 512
+      report "variable-node degree histogram mismatch" severity failure;
 
     -- The 512 punctured variables are the final block. Each row in the
     -- third check block contains exactly its matching punctured variable.
