@@ -37,6 +37,7 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] Expanded reproducible pseudo-random sweep: 25/25 patterns passed at 64, 128, 256, 288 and 320 errors (five trials per level; user-reported GHDL results)
 - [x] One nonzero valid codeword checked against an independent CCSDS TM2048 golden vector (user-reported GHDL PASS)
 - [x] One corrupted information LLR corrected on an independent nonzero CCSDS TM2048 golden vector (user-reported GHDL PASS)
+- [x] Four corrupted information LLRs corrected on an independent nonzero CCSDS TM2048 golden vector (user-reported GHDL PASS)
 - [ ] Additional golden vectors and broader randomized/channel testing
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
@@ -110,6 +111,18 @@ PASS: decoder corrected one corrupted LLR on independent nonzero CCSDS TM2048 re
 ```
 
 All 1024 decoded information bits matched the expected reference message. This is one controlled correction case, not a general performance guarantee.
+
+## EDA Playground: four-error correction on nonzero reference vector
+
+Use the same four RTL files in Design as in the decoder stress-sweep section. Paste `sim/tb_ar4ja_1024_reference_four_errors.vhd` into Testbench and set the top-level entity to `tb_ar4ja_1024_reference_four_errors`.
+
+This test reverses the LLR signs of information bits 0 through 3 on the independent nonzero TM2048 reference codeword. The user reported this GHDL result:
+
+```text
+PASS: decoder corrected four corrupted LLRs on independent nonzero CCSDS TM2048 reference vector
+```
+
+All 1024 decoded information bits matched the expected reference message. This is one controlled four-error pattern, not a general performance guarantee.
 
 ## Simulation results log
 
