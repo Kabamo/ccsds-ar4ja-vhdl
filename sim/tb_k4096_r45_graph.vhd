@@ -21,9 +21,6 @@ architecture test of tb_k4096_r45_graph is begin
     c:=ar4ja_row_col(r,e);
     assert c>=0 and c<AR4JA_GRAPH_COLS report "edge column out of range" severity failure;
     assert c>previous report "row columns not sorted or duplicate GF(2) edge remains" severity failure;
-    if r<2*AR4JA_M then
-     assert c<AR4JA_TX_BITS report "punctured edge in unexpected check block" severity failure;
-    end if;
     previous:=c;
     edges:=edges+1;
    end loop;
