@@ -175,7 +175,7 @@ begin
       report "EBNO_DB outside intended test range [-2, 12] dB"
       severity failure;
 
-    sigma2 := 1.0 / (2.0 * 0.5 * (10.0 ** (EBNO_DB / 10.0)));
+    sigma2 := 1.0 / (2.0 * 0.5 * exp(log(10.0) * (EBNO_DB / 10.0));
     sigma := sqrt(sigma2);
     report "AWGN test start: Eb/N0=" & real'image(EBNO_DB) &
       " dB, sigma=" & real'image(sigma) &
