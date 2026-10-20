@@ -32,11 +32,11 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] Decoder smoke test: all-zero codeword converges and all 1024 decoded information bits are checked (user reported PASS in EDA Playground)
 - [x] Single-LLR error-correction test (user reported GHDL PASS)
 - [x] Four-LLR error-correction test (user reported GHDL PASS)
-- [x] Descending decoder stress sweep: 64, 32, 16, 8, 4 and 1 deterministic LLR errors (user reported GHDL PASS at every level)
-- [x] Extended deterministic sweep: 512, 448, 384 and 320 errors reached max iterations; 288, 256, 128, 64, 32, 16, 8, 4 and 1 passed (user-reported GHDL results)
+- [x] Deterministic error-stress sweep (user-reported results: 512/448/384/320 failed to converge; 288 and below passed for the tested pattern)
 - [x] Initial reproducible pseudo-random sweep: 12/12 patterns passed for 32, 64, 128 and 256 errors (three trials per level; user-reported GHDL results)
-- [ ] Broaden pseudo-random trials and test nonzero valid codewords with independent golden vectors
-- [ ] Broader multi-error sweeps and end-to-end golden vectors
+- [x] Expanded reproducible pseudo-random sweep: 25/25 patterns passed at 64, 128, 256, 288 and 320 errors (five trials per level; user-reported GHDL results)
+- [ ] Test nonzero valid codewords with independent golden vectors
+- [ ] Broader randomized testing and end-to-end golden vectors
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
 
@@ -70,7 +70,7 @@ Expected report: `PASS: AR4JA K=1024 rate-1/2 frame contract completed`.
 
 Expected report: `PASS: AR4JA graph dimensions, row degrees, edges and puncturing checks completed`.
 
-## EDA Playground: decoder clean-frame and descending error-stress sweep
+## EDA Playground: deterministic decoder stress sweep
 
 Add these files to Design in this order:
 1. `rtl/ldpc_fixed_pkg.vhd`
@@ -78,19 +78,17 @@ Add these files to Design in this order:
 3. `rtl/ar4ja_1024_graph_pkg.vhd`
 4. `rtl/ar4ja_1024_decoder.vhd`
 
-Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to `tb_ar4ja_1024_decoder`. Run with GHDL. The test first sends a clean all-zero codeword, then tests deterministic, well-spread error patterns with 512, 448, 384, 320, 288, 256, 128, 64, 32, 16, 8, 4 and 1 corrupted information-bit LLRs. Corrupted LLRs are `-8`; all other transmitted LLRs are `+20`. The sweep continues after a stress-case failure, reporting PASS or STRESS RESULT for each count, so one difficult case does not hide results for the smaller cases. The latest reported run failed at 512, 448, 384 and 320 errors with MAX_ITERATIONS, and passed at 288 and below. This is specific to the deterministic error pattern and LLR magnitudes used here, not a universal correction threshold.
+Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to `tb_ar4ja_1024_decoder`. This test uses a clean all-zero codeword and deterministic error positions `(e * 157) mod 1024), with corrupted LLRs `-8` and all other transmitted LLRs `+20`. The latest reported run failed to converge at 512, 448, 384 and 320 errors, and passed at 288 and below. This applies only to the tested pattern and LLR magnitudes, not a universal correction threshold.
 
-Expected reports:
-- `PASS: clean all-zero codeword`
-- `PASS: decoder corrected 64 deterministic information-bit LLR errors` (or a `STRESS RESULT` warning if not recovered)
-- Equivalent PASS/STRESS RESULT for 448, 384, 320, 288, 256, 128, 64, 32, 16, 8, 4 and 1 errors
-- `PASS: AR4JA decoder clean-frame and descending error-stress sweep completed`
+## EDA Playground: reproducible pseudo-random stress sweep
 
-The user reported GHDL PASS for the clean-frame, single-LLR and four-LLR cases before the stress sweep was added. A separate fixed-seed pseudo-random position testbench subsequently passed 12/12 trials at 32, 64, 128 and 256 corrupted information-bit LLRs (three trials per level); details are in the simulation results log. This remains an early algorithm test: randomized error patterns and independent golden vectors are required, and the RTL needs synthesis, timing and resource review before hardware use.
+Keep the same four RTL files listed above in Design. Paste `sim/tb_ar4ja_1024_random_sweep.vhd` into Testbench and set the top-level entity to `tb_ar4ja_1024_random_sweep`. Run with GHDL.
+
+The test first checks a clean all-zero codeword, then runs five fixed-seed pseudo-random unique error-position patterns at each of 64, 128, 256, 288 and 320 corrupted information-bit LLRs. Corrupted LLRs are `-8`; all other transmitted LLRs are `+20`. The user reported **25/25 trials passing**, including 5/5 at 320 errors. Simulation completion was reported at 5,315,105 ns. These limited tests are not a BER estimate and do not prove a universal correction capability; nonzero valid codewords and independent golden vectors are still needed.
 
 ## Simulation results log
 
-All user-reported GHDL test outcomes, dates, stress-sweep counts, and interpretation limits are recorded in [`docs/decoder-test-results.md`](docs/decoder-test-results.md). Update this log whenever a new run is reported; record the latest run: 512/448/384/320 failed to converge; 288/256/128/64/32/16/8/4/1 passed.
+All user-reported GHDL outcomes and interpretation limits are recorded in [`docs/decoder-test-results.md`](docs/decoder-test-results.md).
 
 ## Repository layout
 
