@@ -113,13 +113,18 @@ architecture test of tb_ar4ja_1024_awgn is
     variable n1, n2 : real;
     variable y, llr_real : real;
     variable quantized : integer;
+    variable tx_bit : std_logic;
   begin
     for i in 0 to AR4JA_TX_BITS - 1 loop
       if (i mod 2) = 0 then
         gaussian_pair(seed1, seed2, n1, n2);
-        y := (if expected_tx_bit(i) = '0' then 1.0 else -1.0) + sigma * n1;
+        tx_bit := expected_tx_bit(i);
+        if tx_bit = '0' then y := 1.0 + sigma * n1;
+        else y := -1.0 + sigma * n1; end if;
       else
-        y := (if expected_tx_bit(i) = '0' then 1.0 else -1.0) + sigma * n2;
+        tx_bit := expected_tx_bit(i);
+        if tx_bit = '0' then y := 1.0 + sigma * n2;
+        else y := -1.0 + sigma * n2; end if;
       end if;
 
       -- For BPSK amplitude +/-1, log(P(y|0)/P(y|1)) = 2*y/sigma^2.
