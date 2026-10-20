@@ -43,7 +43,7 @@ begin
     variable q          : llr_array_t(0 to AR4JA_GRAPH_MAX_ROW_DEGREE - 1);
     variable r_new      : llr_array_t(0 to AR4JA_GRAPH_MAX_ROW_DEGREE - 1);
     variable degree     : natural range 0 to AR4JA_GRAPH_MAX_ROW_DEGREE;
-    variable col        : integer;
+    variable col        : ar4ja_graph_col_t;
     variable parity     : std_logic;
   begin
     if rising_edge(clk) then
