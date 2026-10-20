@@ -26,7 +26,7 @@ GHDL run reported at 09:55 UTC:
 
 The single-error test corrupts information bit 0. The four-error test corrupts information bits 0, 1, 2 and 3.
 
-### 2026-10-20 — descending deterministic stress sweep
+### 2026-10-20 — initial deterministic stress sweep
 
 GHDL run reported at 09:57 UTC:
 
@@ -42,7 +42,29 @@ GHDL run reported at 09:57 UTC:
 | 4 | PASS |
 | 1 | PASS |
 
-The simulator reported the clean-frame test passing and the overall descending sweep completing. The 512-error case is a detected decoding failure, not a successful decode. The smaller cases were still run after that failure.
+The simulator reported the clean-frame test passing and the overall sweep completing. The 512-error case is a detected decoding failure, not a successful decode. The smaller cases were still run after that failure.
+
+### 2026-10-20 — extended deterministic stress sweep
+
+GHDL run reported at 13:39 UTC:
+
+| Number of corrupted information-bit LLRs | Result |
+|---:|---|
+| 512 | STRESS RESULT: did not recover; status `AR4JA_STATUS_MAX_ITERATIONS`; first wrong decoded bit 0 |
+| 448 | STRESS RESULT: did not recover; status `AR4JA_STATUS_MAX_ITERATIONS`; first wrong decoded bit 1 |
+| 384 | STRESS RESULT: did not recover; status `AR4JA_STATUS_MAX_ITERATIONS`; first wrong decoded bit 0 |
+| 320 | STRESS RESULT: did not recover; status `AR4JA_STATUS_MAX_ITERATIONS`; first wrong decoded bit 0 |
+| 288 | PASS |
+| 256 | PASS |
+| 128 | PASS |
+| 64 | PASS |
+| 32 | PASS |
+| 16 | PASS |
+| 8 | PASS |
+| 4 | PASS |
+| 1 | PASS |
+
+The clean all-zero codeword also passed. For this single deterministic position pattern, the observed transition lies between 288 (pass) and 320 (failure). This is not a universal error-correction threshold; randomized positions and additional codewords are still needed.
 
 ### Previously reported component tests
 
@@ -58,5 +80,5 @@ The user also reported PASS for:
 - These results use the all-zero codeword and one deterministic error-position pattern. They are not a measured bit-error-rate curve and do not establish a universal correction threshold.
 - A PASS means the tested frame converged to the expected all-zero information bits for that specific test pattern and LLR magnitude.
 - The 512-error failure and 256-error success do not imply all patterns of 256 errors are correctable or all patterns of 512 errors fail.
-- The intermediate 448-, 384-, 320- and 288-error tests have been added to the latest testbench but had not yet been reported as run when this log was updated.
+- The 448-, 384-, 320- and 288-error intermediate tests have now been run and recorded above.
 - Independent golden vectors, nonzero valid codewords, randomized error patterns, convergence-failure coverage, and Vivado synthesis/timing/resource checks remain outstanding.
