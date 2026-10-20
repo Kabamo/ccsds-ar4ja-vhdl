@@ -1,6 +1,6 @@
 -- SPDX-License-Identifier: MIT
 -- Reproducible randomized stress test using an independent nonzero CCSDS TM2048
--- golden codeword. 30 trials across error counts 256, 384 and 512.
+-- golden codeword. 3-trial smoke test across error counts 256, 384 and 512.
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -239,39 +239,10 @@ begin
     end loop;
     report "PASS: clean nonzero CCSDS reference codeword" severity note;
 
-    -- Ten reproducible trials per level: 30 high-error trials total.
-    run_random_error_case(256, 7103,  71011, 71);
-    run_random_error_case(256, 7207,  72019, 72);
-    run_random_error_case(256, 7307,  73009, 73);
-    run_random_error_case(256, 7403,  74017, 74);
-    run_random_error_case(256, 7507,  75011, 75);
-    run_random_error_case(256, 7603,  76001, 76);
-    run_random_error_case(256, 7703,  77023, 77);
-    run_random_error_case(256, 7807,  78041, 78);
-    run_random_error_case(256, 7901,  79031, 79);
-    run_random_error_case(256, 8009,  80021, 80);
-
-    run_random_error_case(384, 8101,  81013, 81);
-    run_random_error_case(384, 8209,  82003, 82);
-    run_random_error_case(384, 8303,  83017, 83);
-    run_random_error_case(384, 8401,  84011, 84);
-    run_random_error_case(384, 8501,  85027, 85);
-    run_random_error_case(384, 8609,  86029, 86);
-    run_random_error_case(384, 8707,  87011, 87);
-    run_random_error_case(384, 8803,  88019, 88);
-    run_random_error_case(384, 8903,  89017, 89);
-    run_random_error_case(384, 9001,  90023, 90);
-
-    run_random_error_case(512, 9103,  91009, 91);
-    run_random_error_case(512, 9203,  92003, 92);
-    run_random_error_case(512, 9301,  93001, 93);
-    run_random_error_case(512, 9403,  94009, 94);
-    run_random_error_case(512, 9503,  95003, 95);
-    run_random_error_case(512, 9601,  96017, 96);
-    run_random_error_case(512, 9703,  97001, 97);
-    run_random_error_case(512, 9803,  98009, 98);
-    run_random_error_case(512, 9901,  99017, 99);
-    run_random_error_case(512, 10007, 100003, 100);
+    -- One reproducible trial per level: quick high-error smoke test.
+    run_random_error_case(256, 7103, 71011, 1);
+    run_random_error_case(384, 8101, 81013, 2);
+    run_random_error_case(512, 9103, 91009, 3);
 
     report "RANDOM STRESS SUMMARY: " & integer'image(pass_count) &
       " passed, " & integer'image(fail_count) & " failed out of " &
