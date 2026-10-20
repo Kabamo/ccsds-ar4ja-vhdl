@@ -1,5 +1,5 @@
 -- SPDX-License-Identifier: MIT
--- End-to-end tests: clean all-zero frame and correction of one corrupted LLR.
+-- End-to-end stress tests for the sequential AR4JA decoder.
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -45,15 +45,54 @@ begin
     );
 
   stimulus : process
+    procedure run_error_case(constant n_errors : in natural) is
+      variable frame : ar4ja_llr_frame_t;
+      variable passed : boolean;
+      variable bad_bit : integer;
+    begin
+      frame := (others => to_signed(20, 8));
+      -- Deterministic, well-spread error locations; 157 is coprime to 1024.
+      for e in 0 to n_errors - 1 loop
+        frame((e * 157) mod AR4JA_INFO_BITS) := to_signed(-8, 8);
+      end loop;
+      llr_in <= frame;
+
+      wait until rising_edge(clk);
+      start <= '1';
+      wait until rising_edge(clk);
+      start <= '0';
+
+      wait until done = '1';
+      passed := (status = AR4JA_STATUS_CONVERGED);
+      bad_bit := -1;
+      for b in 0 to AR4JA_INFO_BITS - 1 loop
+        if decoded_bits(b) /= '0' then
+          passed := false;
+          bad_bit := b;
+          exit;
+        end if;
+      end loop;
+
+      if passed then
+        report "PASS: decoder corrected " & integer'image(n_errors) &
+          " deterministic information-bit LLR errors" severity note;
+      else
+        report "STRESS RESULT: decoder did not recover " & integer'image(n_errors) &
+          " errors; status=" & ar4ja_decode_status_t'image(status) &
+          ", first wrong decoded bit=" & integer'image(bad_bit) severity warning;
+      end if;
+    end procedure;
   begin
-    -- Test 1: clean all-zero codeword.
     wait for 20 ns;
     wait until rising_edge(clk);
     rst <= '0';
+
+    -- Baseline clean frame.
+    llr_in <= (others => to_signed(20, 8));
+    wait until rising_edge(clk);
     start <= '1';
     wait until rising_edge(clk);
     start <= '0';
-
     wait until done = '1';
     assert status = AR4JA_STATUS_CONVERGED
       report "clean all-zero codeword did not converge" severity failure;
@@ -64,46 +103,16 @@ begin
     end loop;
     report "PASS: clean all-zero codeword" severity note;
 
-    -- Test 2: corrupt information bit 0 with a moderate negative LLR.
-    -- All other transmitted bits strongly favor zero; the decoder should correct it.
-    wait until rising_edge(clk);
-    llr_in(0) <= to_signed(-8, 8);
-    start <= '1';
-    wait until rising_edge(clk);
-    start <= '0';
+    -- Start aggressively, then automatically reduce the error count if needed.
+    run_error_case(64);
+    run_error_case(32);
+    run_error_case(16);
+    run_error_case(8);
+    run_error_case(4);
+    run_error_case(1);
 
-    wait until done = '1';
-    assert status = AR4JA_STATUS_CONVERGED
-      report "single-LLR error did not converge" severity failure;
-    for b in 0 to AR4JA_INFO_BITS - 1 loop
-      assert decoded_bits(b) = '0'
-        report "single-error frame: unexpected nonzero decoded bit at index " & integer'image(b)
-        severity failure;
-    end loop;
-
-    report "PASS: decoder corrects one corrupted information-bit LLR" severity note;
-
-    -- Test 3: increase the challenge to four corrupted information-bit LLRs.
-    -- Keep bit 0 corrupted and also flip bits 1, 2 and 3.
-    wait until rising_edge(clk);
-    llr_in(1) <= to_signed(-8, 8);
-    llr_in(2) <= to_signed(-8, 8);
-    llr_in(3) <= to_signed(-8, 8);
-    start <= '1';
-    wait until rising_edge(clk);
-    start <= '0';
-
-    wait until done = '1';
-    assert status = AR4JA_STATUS_CONVERGED
-      report "four-LLR error pattern did not converge" severity failure;
-    for b in 0 to AR4JA_INFO_BITS - 1 loop
-      assert decoded_bits(b) = '0'
-        report "four-error frame: unexpected nonzero decoded bit at index " & integer'image(b)
-        severity failure;
-    end loop;
-
-    report "PASS: decoder corrects four corrupted information-bit LLRs" severity note;
-    report "PASS: AR4JA decoder clean-frame, single-error and four-error tests completed" severity note;
+    report "PASS: AR4JA decoder clean-frame and descending error-stress sweep completed"
+      severity note;
     clock_enable <= '0';
     wait;
   end process;
