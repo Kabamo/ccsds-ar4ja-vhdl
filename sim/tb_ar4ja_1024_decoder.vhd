@@ -1,5 +1,5 @@
 -- SPDX-License-Identifier: MIT
--- Smoke test: the all-zero codeword has positive LLRs and zero syndrome.
+-- End-to-end tests: clean all-zero frame and correction of one corrupted LLR.
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -46,6 +46,7 @@ begin
 
   stimulus : process
   begin
+    -- Test 1: clean all-zero codeword.
     wait for 20 ns;
     wait until rising_edge(clk);
     rst <= '0';
@@ -55,14 +56,33 @@ begin
 
     wait until done = '1';
     assert status = AR4JA_STATUS_CONVERGED
-      report "all-zero codeword did not converge" severity failure;
+      report "clean all-zero codeword did not converge" severity failure;
     for b in 0 to AR4JA_INFO_BITS - 1 loop
       assert decoded_bits(b) = '0'
-        report "unexpected nonzero decoded bit at index " & integer'image(b)
+        report "clean frame: unexpected nonzero decoded bit at index " & integer'image(b)
+        severity failure;
+    end loop;
+    report "PASS: clean all-zero codeword" severity note;
+
+    -- Test 2: corrupt information bit 0 with a moderate negative LLR.
+    -- All other transmitted bits strongly favor zero; the decoder should correct it.
+    wait until rising_edge(clk);
+    llr_in(0) <= to_signed(-8, 8);
+    start <= '1';
+    wait until rising_edge(clk);
+    start <= '0';
+
+    wait until done = '1';
+    assert status = AR4JA_STATUS_CONVERGED
+      report "single-LLR error did not converge" severity failure;
+    for b in 0 to AR4JA_INFO_BITS - 1 loop
+      assert decoded_bits(b) = '0'
+        report "single-error frame: unexpected nonzero decoded bit at index " & integer'image(b)
         severity failure;
     end loop;
 
-    report "PASS: AR4JA decoder converges on the all-zero codeword" severity note;
+    report "PASS: decoder corrects one corrupted information-bit LLR" severity note;
+    report "PASS: AR4JA decoder clean-frame and single-error tests completed" severity note;
     clock_enable <= '0';
     wait;
   end process;
