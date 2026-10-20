@@ -1,9 +1,8 @@
 -- SPDX-License-Identifier: MIT
--- Small self-checking testbench for ldpc_fixed_pkg (VHDL-2008).
+-- Self-checking testbench for ldpc_fixed_pkg.
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use std.env.all;
 use work.ldpc_fixed_pkg.all;
 
 entity tb_ldpc_fixed_pkg is
@@ -12,7 +11,12 @@ end entity;
 architecture test of tb_ldpc_fixed_pkg is
 begin
   stimulus : process
+    variable incoming : llr_array_t(0 to 2);
+    variable outgoing : llr_array_t(0 to 2);
+    variable singleton : llr_array_t(0 to 0);
+    variable singleton_out : llr_array_t(0 to 0);
   begin
+    -- Fixed-point helpers
     assert to_integer(sat_llr(0)) = 0
       report "sat_llr(0) failed" severity failure;
     assert to_integer(sat_llr(200)) = 127
@@ -43,8 +47,47 @@ begin
     assert to_integer(sat_sub(to_signed(100, 8), to_signed(-50, 8))) = 127
       report "saturating subtraction positive overflow failed" severity failure;
 
-    report "PASS: ldpc_fixed_pkg checks completed" severity note;
-    finish;
+    -- Mixed signs and distinct minima: (+10, -20, +30) -> (-15, +7, -7).
+    incoming(0) := to_signed(10, 8);
+    incoming(1) := to_signed(-20, 8);
+    incoming(2) := to_signed(30, 8);
+    outgoing := check_node_min_sum(incoming);
+    assert to_integer(outgoing(0)) = -15
+      report "check-node output 0 failed" severity failure;
+    assert to_integer(outgoing(1)) = 7
+      report "check-node output 1 failed" severity failure;
+    assert to_integer(outgoing(2)) = -7
+      report "check-node output 2 failed" severity failure;
+
+    -- Three negative inputs: each outgoing sign is positive.
+    incoming(0) := to_signed(-8, 8);
+    incoming(1) := to_signed(-12, 8);
+    incoming(2) := to_signed(-20, 8);
+    outgoing := check_node_min_sum(incoming);
+    assert to_integer(outgoing(0)) = 9
+      report "all-negative check-node output 0 failed" severity failure;
+    assert to_integer(outgoing(1)) = 6
+      report "all-negative check-node output 1 failed" severity failure;
+    assert to_integer(outgoing(2)) = 6
+      report "all-negative check-node output 2 failed" severity failure;
+
+    -- Equal minima must be handled correctly for every edge.
+    incoming(0) := to_signed(5, 8);
+    incoming(1) := to_signed(5, 8);
+    incoming(2) := to_signed(9, 8);
+    outgoing := check_node_min_sum(incoming);
+    assert to_integer(outgoing(0)) = 3 and
+           to_integer(outgoing(1)) = 3 and
+           to_integer(outgoing(2)) = 3
+      report "equal-minimum check-node case failed" severity failure;
+
+    -- A degree-one check has no extrinsic minimum; define output as zero.
+    singleton(0) := to_signed(-17, 8);
+    singleton_out := check_node_min_sum(singleton);
+    assert to_integer(singleton_out(0)) = 0
+      report "degree-one check-node fallback failed" severity failure;
+
+    report "PASS: ldpc_fixed_pkg and check-node tests completed" severity note;
     wait;
   end process;
 end architecture;
