@@ -75,14 +75,33 @@ package body ldpc_fixed_pkg is
     return to_unsigned(scaled, 7);
   end function;
 
+  -- Use a 9-bit intermediate: the exact sum/difference of two signed
+  -- 8-bit operands fits in 9 bits. This avoids widening the datapath to
+  -- VHDL integer width during synthesis.
   function sat_add(a : llr_t; b : llr_t) return llr_t is
+    variable wide_sum : signed(8 downto 0);
   begin
-    return sat_llr(to_integer(a) + to_integer(b));
+    wide_sum := resize(a, wide_sum'length) + resize(b, wide_sum'length);
+    if wide_sum(8 downto 7) = "01" then
+      return to_signed(127, 8);
+    elsif wide_sum(8 downto 7) = "10" then
+      return to_signed(-128, 8);
+    else
+      return wide_sum(7 downto 0);
+    end if;
   end function;
 
   function sat_sub(a : llr_t; b : llr_t) return llr_t is
+    variable wide_diff : signed(8 downto 0);
   begin
-    return sat_llr(to_integer(a) - to_integer(b));
+    wide_diff := resize(a, wide_diff'length) - resize(b, wide_diff'length);
+    if wide_diff(8 downto 7) = "01" then
+      return to_signed(127, 8);
+    elsif wide_diff(8 downto 7) = "10" then
+      return to_signed(-128, 8);
+    else
+      return wide_diff(7 downto 0);
+    end if;
   end function;
 
   procedure check_node_min_sum(
