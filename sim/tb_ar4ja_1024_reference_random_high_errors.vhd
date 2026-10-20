@@ -11,7 +11,7 @@ use work.ar4ja_1024_frame_pkg.all;
 entity tb_ar4ja_1024_reference_random_high_errors is
 end entity;
 
-architecture test of tb_ar4ja_1024_reference_random_stress is
+architecture test of tb_ar4ja_1024_reference_random_high_errors is
   type boolean_frame_t is array (0 to AR4JA_INFO_BITS - 1) of boolean;
 
   signal clk          : std_logic := '0';
