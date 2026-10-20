@@ -38,7 +38,7 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] One nonzero valid codeword checked against an independent CCSDS TM2048 golden vector (user-reported GHDL PASS)
 - [x] One corrupted information LLR corrected on an independent nonzero CCSDS TM2048 golden vector (user-reported GHDL PASS)
 - [x] Four corrupted information LLRs corrected on an independent nonzero CCSDS TM2048 golden vector (user-reported GHDL PASS)
-- [x] Reproducible AWGN channel testbench added (`sim/tb_ar4ja_1024_awgn.vhd`); simulation results still pending user execution
+- [x] Reproducible AWGN channel testbench added and exercised by the user at 1.0, 1.25, 1.5, 1.55, 1.6, 1.7, 2.0 and 3.0 dB; exploratory results recorded in `docs/decoder-test-results.md`
 - [ ] Additional golden vectors and broader randomized/channel testing
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
@@ -159,4 +159,4 @@ Channel assumptions:
 - Positive LLR favors bit 0, matching the RTL frame contract.
 - The transmitted frame is a valid published reference codeword, not a randomly generated information frame. This is sufficient for initial channel/decoder validation, but broader confidence should later use multiple codewords and many frames per SNR.
 
-A frame counts as a frame error if the decoder does not report convergence **or** any of the 1024 decoded information bits is wrong. A completed simulation is not automatically a passing result: inspect the per-frame lines and the final AWGN summary. These short runs are a smoke test, not enough to establish a statistically meaningful waterfall/FER curve.
+A frame counts as a frame error if the decoder does not report convergence **or** any of the 1024 decoded information bits is wrong. A completed simulation is not automatically a passing result: inspect the per-frame lines and the final AWGN summary. User-reported exploratory results show 19/20 frame failures at 1.0 dB, 8/15 at 1.25 dB, 2/15 at 1.55 dB, 0/15 at 1.7 dB, and 0/30 at 2.0 dB. The 1.5 and 1.6 dB runs were interrupted after 21 frames (exit 137). See `docs/decoder-test-results.md` for the complete table and caveats. These short runs are a smoke test, not enough to establish a statistically meaningful waterfall/FER curve.
