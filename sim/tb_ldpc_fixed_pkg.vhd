@@ -17,6 +17,7 @@ begin
     variable singleton_out : llr_array_t(0 to 0);
     variable check_msgs : llr_array_t(0 to 2);
     variable extrinsic_msgs : llr_array_t(0 to 2);
+    variable expected : integer;
   begin
     -- Fixed-point helpers
     assert to_integer(sat_llr(0)) = 0
@@ -48,6 +49,36 @@ begin
       report "saturating subtraction failed" severity failure;
     assert to_integer(sat_sub(to_signed(100, 8), to_signed(-50, 8))) = 127
       report "saturating subtraction positive overflow failed" severity failure;
+
+    -- Exhaustive arithmetic equivalence checks for all 8-bit operand pairs.
+    -- These protect the narrow datapath implementation against corner cases.
+    for a_value in -128 to 127 loop
+      for b_value in -128 to 127 loop
+        expected := a_value + b_value;
+        if expected > 127 then
+          expected := 127;
+        elsif expected < -128 then
+          expected := -128;
+        end if;
+        assert to_integer(sat_add(to_signed(a_value, 8), to_signed(b_value, 8))) = expected
+          report "exhaustive saturating addition mismatch" severity failure;
+
+        expected := a_value - b_value;
+        if expected > 127 then
+          expected := 127;
+        elsif expected < -128 then
+          expected := -128;
+        end if;
+        assert to_integer(sat_sub(to_signed(a_value, 8), to_signed(b_value, 8))) = expected
+          report "exhaustive saturating subtraction mismatch" severity failure;
+      end loop;
+    end loop;
+
+    for magnitude_value in 0 to 127 loop
+      assert to_integer(normalize_3_4(to_unsigned(magnitude_value, 7))) =
+             (magnitude_value * 3) / 4
+        report "exhaustive 3/4 normalization mismatch" severity failure;
+    end loop;
 
     -- Check-node: mixed signs and distinct minima.
     incoming(0) := to_signed(10, 8);
