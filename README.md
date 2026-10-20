@@ -47,6 +47,14 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 
 `rtl/ar4ja_1024_graph_pkg.vhd` stores the sparse parity-check matrix as row adjacency: 1536 check nodes, 2560 variable nodes and 7680 edges. Each row has degree 3 or 6. The punctured variables are columns 2048..2559; each row in check block 2 has its corresponding punctured identity edge. The graph is generated from the fixed-mode permutation parameters transcribed from CCSDS 131.0-B-5 Tables 7-3 and 7-4; structural checks do not by themselves prove end-to-end decoder correctness.
 
+## LUT/resource optimization status
+
+A first synthesis-oriented cleanup pass is in progress. It narrows the LLR add/subtract intermediates to 9 bits, replaces integer-width magnitude/normalization arithmetic with fixed-width unsigned/signed operations, narrows normalized-min-sum temporaries, and constrains graph column indices to the 12-bit graph-index subtype. These changes are intended to reduce unnecessary logic width; **no LUT reduction is claimed until the revised RTL is simulated and synthesized for the target FPGA**.
+
+The main remaining resource risk is the decoder's multi-access variable-node LLR array and the dynamic sparse-graph lookup. The next substantial optimization should be driven by Vivado reports and should investigate memory inference/banking and a more compact schedule/graph representation. Preserve the functional baseline branch when comparing alternatives.
+
+Target objective: below 15,000 LUTs. This is a design target, not yet a measured or demonstrated result.
+
 ## EDA Playground: primitive tests
 
 1. Paste `rtl/ldpc_fixed_pkg.vhd` into Design and `sim/tb_ldpc_fixed_pkg.vhd` into Testbench.
