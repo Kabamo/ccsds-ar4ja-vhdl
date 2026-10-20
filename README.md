@@ -87,6 +87,10 @@ Expected reports:
 
 The user reported GHDL PASS for the clean-frame, single-LLR and four-LLR cases before the stress sweep was added. This remains an early algorithm test: randomized error patterns and independent golden vectors are required, and the RTL needs synthesis, timing and resource review before hardware use.
 
+## Simulation results log
+
+All user-reported GHDL test outcomes, dates, stress-sweep counts, and interpretation limits are recorded in [`docs/decoder-test-results.md`](docs/decoder-test-results.md). Update this log whenever a new run is reported; do not mark the newly added 448/384/320/288 cases as passed until their actual GHDL results are available.
+
 ## Repository layout
 
 - `rtl/`: synthesizable VHDL design sources
