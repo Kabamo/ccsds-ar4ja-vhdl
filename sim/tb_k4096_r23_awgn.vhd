@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 -- Reproducible AWGN smoke test for k4096_r23.
 -- Uses the all-zero valid codeword, which is valid for every linear AR4JA mode.
--- BPSK: bit 0 -> +1, bit 1 -> -1. AWGN sigma^2 = 1/(2*R*Eb/N0), R=1/2.
+-- BPSK: bit 0 -> +1, bit 1 -> -1. AWGN sigma^2 = 1/(2*R*Eb/N0), R=4/(4+2).
 -- LLR convention: positive favors bit 0. Quantization uses 4x exact channel LLR,
 -- rounded and saturated to signed 8-bit. Set generics to sweep SNR / frame count.
 --
@@ -128,7 +128,7 @@ begin
       report "EBNO_DB outside intended test range [-2, 12] dB"
       severity failure;
 
-    sigma2 := 1.0 / (2.0 * 0.5 * exp(log(10.0) * (EBNO_DB / 10.0)));
+    sigma2 := 1.0 / (2.0 * (4.0 / (4.0 + 2.0)) * exp(log(10.0) * (EBNO_DB / 10.0)));
     sigma := sqrt(sigma2);
     report "AWGN test start: Eb/N0=" & real'image(EBNO_DB) &
       " dB, sigma=" & real'image(sigma) &
