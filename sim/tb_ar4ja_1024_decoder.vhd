@@ -11,6 +11,7 @@ end entity;
 
 architecture test of tb_ar4ja_1024_decoder is
   signal clk          : std_logic := '0';
+  signal clock_enable : std_logic := '1';
   signal rst          : std_logic := '1';
   signal start        : std_logic := '0';
   signal llr_in       : ar4ja_llr_frame_t := (others => to_signed(20, 8));
@@ -19,7 +20,17 @@ architecture test of tb_ar4ja_1024_decoder is
   signal done         : std_logic;
   signal status       : ar4ja_decode_status_t;
 begin
-  clk <= not clk after 5 ns;
+  clock_driver : process
+  begin
+    while clock_enable = '1' loop
+      clk <= '0';
+      wait for 5 ns;
+      clk <= '1';
+      wait for 5 ns;
+    end loop;
+    clk <= '0';
+    wait;
+  end process;
 
   dut : entity work.ar4ja_1024_decoder
     port map (
@@ -52,6 +63,7 @@ begin
     end loop;
 
     report "PASS: AR4JA decoder converges on the all-zero codeword" severity note;
+    clock_enable <= '0';
     wait;
   end process;
 end architecture;
