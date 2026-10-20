@@ -73,7 +73,14 @@ Add these files to Design in this order:
 3. `rtl/ar4ja_1024_graph_pkg.vhd`
 4. `rtl/ar4ja_1024_decoder.vhd`
 
-undefined
+Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to `tb_ar4ja_1024_decoder`. Run with GHDL. The test first sends a clean all-zero codeword, then flips the sign of information-bit 0's LLR to `-8` while the other transmitted LLRs remain `+20`. Both runs must converge to the all-zero information frame.
+
+Expected reports:
+- `PASS: clean all-zero codeword`
+- `PASS: decoder corrects one corrupted information-bit LLR`
+- `PASS: AR4JA decoder clean-frame and single-error tests completed`
+
+The clean-frame test was previously reported PASS by the user at 30755 ns. The new single-error case is not yet validated. This remains an early algorithm test: more error patterns and golden vectors are required, and the RTL needs synthesis, timing and resource review before hardware use.
 
 ## Repository layout
 
