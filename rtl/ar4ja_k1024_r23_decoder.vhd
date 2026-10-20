@@ -87,11 +87,9 @@ begin
               end if;
             end loop;
 
-            if degree = 3 then
-              check_node_min_sum(q(0 to 2), r_new(0 to 2));
-            else
-              check_node_min_sum(q, r_new);
-            end if;
+            -- Pass only active edges. The higher-rate AR4JA matrices have
+            -- row degrees greater than six; padded zero entries are not edges.
+            check_node_min_sum(q(0 to degree - 1), r_new(0 to degree - 1));
 
             for e in 0 to degree - 1 loop
               col := ar4ja_row_col(row_index, e);
