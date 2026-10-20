@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Compile all six CCSDS AR4JA VHDL decoder variants, then run graph and AWGN smoke tests.
-# Requires GHDL with VHDL-2008. The AWGN benches use the all-zero valid codeword at 10 dB.
+# Requires GHDL with VHDL-2008. The AWGN benches use the all-zero valid codeword; default Eb/N0 is 10 dB (override with AWGN_EBNO_DB).
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$(mktemp -d)"
@@ -26,7 +26,7 @@ run_tb() {
 for tag in k1024_r12 k1024_r23 k1024_r45 k4096_r12 k4096_r23 k4096_r45; do
   run_tb "tb_${tag}_graph" "sim/tb_${tag}_graph.vhd"
   log="$WORK/${tag}-awgn.log"
-  if ! run_tb "tb_${tag}_awgn" "sim/tb_${tag}_awgn.vhd" -gEBNO_DB=10.0 -gN_FRAMES="${AWGN_FRAMES:-1}" 2>&1 | tee "$log"; then
+  if ! run_tb "tb_${tag}_awgn" "sim/tb_${tag}_awgn.vhd" -gEBNO_DB="${AWGN_EBNO_DB:-10.0}" -gN_FRAMES="${AWGN_FRAMES:-1}" 2>&1 | tee "$log"; then
     echo "ERROR: AWGN test process failed for $tag" >&2; exit 1
   fi
   grep -q "PASS: all AWGN frames decoded correctly at requested Eb/N0" "$log" || {
