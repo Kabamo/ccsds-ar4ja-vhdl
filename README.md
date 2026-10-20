@@ -15,7 +15,7 @@ Independent VHDL implementation targeting a Zynq UltraScale+ FPGA.
 
 ## User-facing frame contract
 
-The target interface is one complete 2048-LLR input frame and one 1024-bit systematic information output frame. Positive LLR favors bit 0; negative LLR favors bit 1. The first array element represents transmitted CCSDS Bit 0. CRC processing is deliberately outside the LDPC decoder: the caller must specify which information bits contain CRC and remove them after decoding.
+The intended interface is one complete 2048-LLR input frame and one 1024-bit systematic information output frame. Positive LLR favors bit 0; negative LLR favors bit 1. The first array element represents transmitted CCSDS Bit 0. CRC processing is deliberately outside the LDPC decoder: the caller must specify which information bits contain CRC and remove them after decoding.
 
 The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd`. This is an interface contract only; it is not yet an operational decoder.
 
@@ -25,15 +25,17 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] Check-node normalized min-sum primitive
 - [x] Variable-node extrinsic and posterior primitives
 - [x] Self-checking primitive testbench (user reported PASS in EDA Playground)
-- [x] Fixed-mode frame contract: dimensions, LLR sign convention, array ordering, decode status enum
-- [x] Frame-contract testbench added (awaiting user simulation)
-- [ ] Normative CCSDS AR4JA graph/permutation generation and independent structural checks
-- [ ] Message memory and iterative decoder datapath/control
-- [ ] End-to-end golden vectors and correction tests
-- [ ] Frame-level RTL interface and CRC placement integration
-- [ ] Vivado synthesis, timing, and resource checks
+- [x] Fixed-mode frame contract and testbench (user reported PASS in EDA Playground)
+- [x] Sparse AR4JA graph ROM generated for the fixed M=512 mode
+- [x] Graph structural testbench: row degrees, edge count, column degrees and puncturing identity (awaiting user GHDL run)
+- [ ] Iterative decoder datapath/control and message memory
+- [ ] End-to-end golden vectors and error-correction tests
+- [ ] Frame-level streaming interface and CRC placement integration
+- [ ] Vivado synthesis, timing and resource checks
 
-The validated primitives are not yet a functioning decoder. Do not treat the frame contract package as a decoder core.
+### Graph representation
+
+`rtl/ar4ja_1024_graph_pkg.vhd` stores the sparse parity-check matrix as row adjacency: 1536 check nodes, 2560 variable nodes and 7680 edges. Each row has degree 3 or 6. The punctured variables are columns 2048..2559; each row in check block 2 has its corresponding punctured identity edge. The graph is generated from the fixed-mode permutation parameters transcribed from CCSDS 131.0-B-5 Tables 7-3 and 7-4; structural checks do not by themselves prove end-to-end decoder correctness.
 
 ## EDA Playground: primitive tests
 
@@ -51,6 +53,15 @@ Expected report: `PASS: fixed-point, check-node and variable-node tests complete
 4. Compile and run with GHDL.
 
 Expected report: `PASS: AR4JA K=1024 rate-1/2 frame contract completed`.
+
+## EDA Playground: graph structural test
+
+1. Paste the complete `rtl/ar4ja_1024_graph_pkg.vhd` into Design.
+2. Paste `sim/tb_ar4ja_1024_graph_pkg.vhd` into Testbench.
+3. Set top-level entity to `tb_ar4ja_1024_graph_pkg`.
+4. Compile and run with GHDL.
+
+Expected report: `PASS: AR4JA graph dimensions, row degrees, edges and puncturing checks completed`.
 
 ## Repository layout
 
