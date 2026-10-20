@@ -170,3 +170,44 @@ Channel assumptions:
 - The transmitted frame is a valid published reference codeword, not a randomly generated information frame. This is sufficient for initial channel/decoder validation, but broader confidence should later use multiple codewords and many frames per SNR.
 
 A frame counts as a frame error if the decoder does not report convergence **or** any of the 1024 decoded information bits is wrong. A completed simulation is not automatically a passing result: inspect the per-frame lines and the final AWGN summary. User-reported exploratory results show 19/20 frame failures at 1.0 dB, 8/15 at 1.25 dB, 2/15 at 1.55 dB, 0/15 at 1.7 dB, and 0/30 at 2.0 dB. The 1.5 and 1.6 dB runs were interrupted after 21 frames (exit 137). See `docs/decoder-test-results.md` for the complete table and caveats. These short runs are a smoke test, not enough to establish a statistically meaningful waterfall/FER curve.
+
+
+## Multimode VHDL implementation (feature branch)
+
+The branch now contains generated graph packages, frame contracts, decoder RTL and
+self-checking structural/AWGN smoke benches for the six requested operating points.
+Each decoder uses the existing signed 8-bit fixed-point helpers and normalized
+min-sum factor 3/4. The higher-rate graphs use the CCSDS 131.0-B-5 block extension
+matrices and permutation tables, not a copied rate-1/2 graph with altered constants.
+
+| Decoder entity | Information bits | Rate | Transmitted LLRs | Checks | Internal variables | Max row degree |
+|---|---:|:---:|---:|---:|---:|---:|
+| `ar4ja_k1024_r12_decoder` | 1024 | 1/2 | 2048 | 1536 | 2560 | 6 |
+| `ar4ja_k1024_r23_decoder` | 1024 | 2/3 | 1536 | 768 | 1792 | 10 |
+| `ar4ja_k1024_r45_decoder` | 1024 | 4/5 | 1280 | 384 | 1408 | 18 |
+| `ar4ja_k4096_r12_decoder` | 4096 | 1/2 | 8192 | 6144 | 10240 | 6 |
+| `ar4ja_k4096_r23_decoder` | 4096 | 2/3 | 6144 | 3072 | 7168 | 10 |
+| `ar4ja_k4096_r45_decoder` | 4096 | 4/5 | 5120 | 1536 | 5632 | 18 |
+
+For each `k*_r*` tag, `rtl/ar4ja_<tag>_graph_pkg.vhd` contains the sparse graph,
+`rtl/ar4ja_<tag>_frame_pkg.vhd` the frame contract, and
+`rtl/ar4ja_<tag>_decoder.vhd` the decoder entity. The matching
+`sim/tb_<tag>_graph.vhd` checks dimensions, sorted unique edges, index ranges
+and the punctured identity block. `sim/tb_<tag>_awgn.vhd` runs a reproducible
+AWGN smoke test against the all-zero valid codeword; it is not a replacement for
+independent nonzero golden vectors or FER characterization.
+
+### Run the six-mode smoke suite
+
+From the repository root with GHDL installed:
+
+```bash
+bash scripts/run_multimode_smoke.sh
+```
+
+The script analyzes all six VHDL decoder variants and runs the six graph checks
+plus one-frame AWGN smoke tests at 10 dB. The current execution environment did
+not have GHDL installed, so these newly added benches have **not yet been
+executed here**. Treat the RTL as implementation-in-progress until the script
+passes on a GHDL installation and independent reference vectors are added for
+each mode. Vivado synthesis, timing and resource measurements also remain open.
