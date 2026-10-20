@@ -127,7 +127,7 @@ All 1024 decoded information bits matched the expected reference message. This i
 
 ## Simulation results log
 
-All user-reported GHDL outcomes and interpretation limits are recorded in [`docs/decoder-test-results.md`](docs/decoder-test-results.md).
+All user-reported GHDL outcomes and interpretation limits are recorded in [`docs/decoder-test-results.md`](docs/decoder-test-results.md). The observed AWGN FER plot is available [here](docs/awgn-fer.svg), with the underlying [CSV data](docs/awgn-fer-results.csv).
 
 The source-level cycle budget and 40 Mbit/s feasibility estimate are recorded in [`docs/throughput-budget.md`](docs/throughput-budget.md).
 
