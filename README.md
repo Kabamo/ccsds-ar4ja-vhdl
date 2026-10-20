@@ -30,7 +30,8 @@ The shared constants and array/status types are in `rtl/ar4ja_1024_frame_pkg.vhd
 - [x] Graph structural testbench: row degrees, edge count, column degrees and puncturing identity (user reported PASS in EDA Playground)
 - [x] First sequential layered normalized-min-sum decoder RTL prototype
 - [x] Decoder smoke test: all-zero codeword converges and all 1024 decoded information bits are checked (user reported PASS in EDA Playground)
-- [ ] Error-correction tests with deliberately corrupted LLRs and end-to-end golden vectors
+- [ ] Single-LLR error-correction test (testbench added; awaiting user-reported GHDL PASS)
+- [ ] Multi-error tests and end-to-end golden vectors
 - [ ] Frame-level streaming interface and CRC placement integration
 - [ ] Vivado synthesis, timing and resource checks
 
@@ -64,7 +65,7 @@ Expected report: `PASS: AR4JA K=1024 rate-1/2 frame contract completed`.
 
 Expected report: `PASS: AR4JA graph dimensions, row degrees, edges and puncturing checks completed`.
 
-## EDA Playground: decoder smoke test
+## EDA Playground: decoder clean-frame and single-error test
 
 Add these files to Design in this order:
 1. `rtl/ldpc_fixed_pkg.vhd`
@@ -72,11 +73,7 @@ Add these files to Design in this order:
 3. `rtl/ar4ja_1024_graph_pkg.vhd`
 4. `rtl/ar4ja_1024_decoder.vhd`
 
-Paste `sim/tb_ar4ja_1024_decoder.vhd` into Testbench and set top-level entity to `tb_ar4ja_1024_decoder`. Run with GHDL. The test drives positive LLRs for the all-zero codeword and checks convergence and all 1024 decoded information bits.
-
-Expected report: `PASS: AR4JA decoder converges on the all-zero codeword`.
-
-User-reported GHDL result: `PASS: AR4JA decoder converges on the all-zero codeword` at 30755 ns. This is only a smoke test: it checks control flow and zero-syndrome convergence, not error correction under noisy/corrupted input. The initial RTL uses a simple row-sequential memory model and needs simulation, synthesis, timing and resource review before hardware use.
+undefined
 
 ## Repository layout
 
