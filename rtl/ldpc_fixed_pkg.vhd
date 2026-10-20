@@ -1,6 +1,5 @@
 -- SPDX-License-Identifier: MIT
 -- Independent fixed-point helper package for a CCSDS AR4JA decoder.
--- Written to remain compatible with older GHDL defaults where practical.
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -22,6 +21,21 @@ package ldpc_fixed_pkg is
     inputs  : in  llr_array_t;
     outputs : out llr_array_t
   );
+
+  -- Variable-node extrinsic update:
+  -- extrinsic(i) = channel_llr + sum(check_messages(j), j /= i).
+  -- Accumulation is done in integer precision and saturated once per output.
+  procedure variable_node_extrinsic(
+    channel_llr    : in  llr_t;
+    check_messages : in  llr_array_t;
+    extrinsic      : out llr_array_t
+  );
+
+  -- Posterior LLR = channel LLR + all incoming check-node messages.
+  function variable_node_posterior(
+    channel_llr    : llr_t;
+    check_messages : llr_array_t
+  ) return llr_t;
 end package ldpc_fixed_pkg;
 
 package body ldpc_fixed_pkg is
@@ -91,7 +105,6 @@ package body ldpc_fixed_pkg is
       return;
     end if;
 
-    -- Find the two smallest magnitudes, including tied minima.
     for i in inputs'range loop
       magnitude := to_integer(llr_magnitude(inputs(i)));
       if inputs(i) < to_signed(0, inputs(i)'length) then
@@ -115,8 +128,6 @@ package body ldpc_fixed_pkg is
       end if;
 
       scaled_min := to_integer(normalize_3_4(to_unsigned(selected_min, 7)));
-
-      -- Outgoing sign parity is the total parity with this edge's sign removed.
       output_negative := ((negative_count mod 2) /= 0);
       if inputs(i) < to_signed(0, inputs(i)'length) then
         output_negative := not output_negative;
@@ -129,4 +140,34 @@ package body ldpc_fixed_pkg is
       end if;
     end loop;
   end procedure;
+
+  procedure variable_node_extrinsic(
+    channel_llr    : in  llr_t;
+    check_messages : in  llr_array_t;
+    extrinsic      : out llr_array_t
+  ) is
+    variable accumulated : integer;
+  begin
+    for i in check_messages'range loop
+      accumulated := to_integer(channel_llr);
+      for j in check_messages'range loop
+        if j /= i then
+          accumulated := accumulated + to_integer(check_messages(j));
+        end if;
+      end loop;
+      extrinsic(i) := sat_llr(accumulated);
+    end loop;
+  end procedure;
+
+  function variable_node_posterior(
+    channel_llr    : llr_t;
+    check_messages : llr_array_t
+  ) return llr_t is
+    variable accumulated : integer := to_integer(channel_llr);
+  begin
+    for i in check_messages'range loop
+      accumulated := accumulated + to_integer(check_messages(i));
+    end loop;
+    return sat_llr(accumulated);
+  end function;
 end package body ldpc_fixed_pkg;
