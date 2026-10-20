@@ -52,27 +52,35 @@ package body ldpc_fixed_pkg is
     return to_signed(clipped, 8);
   end function;
 
+  -- Keep the magnitude datapath narrow. Widen before negation so -128
+  -- is representable as +128, then saturate it to the 7-bit magnitude max.
   function llr_magnitude(value : llr_t) return mag_t is
-    variable v : integer;
-    variable m : integer;
+    variable wide_value : signed(8 downto 0);
+    variable magnitude  : unsigned(7 downto 0);
   begin
-    v := to_integer(value);
-    if v < 0 then
-      m := -v;
+    wide_value := resize(value, wide_value'length);
+    if value(7) = '1' then
+      magnitude := unsigned(-wide_value);
     else
-      m := v;
+      magnitude := unsigned(wide_value);
     end if;
-    if m > 127 then
-      m := 127;
+
+    if magnitude(7) = '1' then
+      return to_unsigned(127, 7);
+    else
+      return magnitude(6 downto 0);
     end if;
-    return to_unsigned(m, 7);
   end function;
 
+  -- Exact floor(3*value/4) using a 9-bit constant multiply (x + 2*x)
+  -- followed by a two-bit shift, rather than VHDL integer arithmetic.
   function normalize_3_4(value : mag_t) return mag_t is
-    variable scaled : integer;
+    variable wide_value : unsigned(8 downto 0);
+    variable triple     : unsigned(8 downto 0);
   begin
-    scaled := (to_integer(value) * 3) / 4;
-    return to_unsigned(scaled, 7);
+    wide_value := resize(value, wide_value'length);
+    triple := wide_value + shift_left(wide_value, 1);
+    return resize(shift_right(triple, 2), 7);
   end function;
 
   -- Use a 9-bit intermediate: the exact sum/difference of two signed
