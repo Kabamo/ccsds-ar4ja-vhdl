@@ -16,6 +16,8 @@ for tag in k1024_r12 k1024_r23 k1024_r45 k4096_r12 k4096_r23 k4096_r45; do
   "$GHDL" -a "$STD" --workdir="$WORK" "rtl/ar4ja_${tag}_graph_pkg.vhd"
   "$GHDL" -a "$STD" --workdir="$WORK" "rtl/ar4ja_${tag}_decoder.vhd"
 done
+"$GHDL" -a "$STD" --workdir="$WORK" rtl/ar4ja_configurable_pkg.vhd
+"$GHDL" -a "$STD" --workdir="$WORK" rtl/ar4ja_configurable_decoder.vhd
 run_tb() {
   local entity="$1" source="$2"; shift 2
   echo "===== $entity ====="
