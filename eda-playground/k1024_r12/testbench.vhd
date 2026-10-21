@@ -128,7 +128,9 @@ begin
     variable frame_llr : integer;
     variable failed : boolean;
     file trace_file : text;
+    file info_trace_file : text;
     variable trace_line : line;
+    variable info_trace_line : line;
     variable hard_bit : integer;
     variable tx_bit_int : integer;
     variable decoded_int : integer;
@@ -136,8 +138,11 @@ begin
   begin
     if TRACE_ENABLE then
       file_open(trace_file, "ldpc_trace_k1024_r12.csv", write_mode);
-      write(trace_line, string'("frame,index,tx_bit,llr,hard_rx,channel_error,info_expected,info_decoded"));
+      write(trace_line, string'("frame,tx_index,tx_bit,llr,hard_rx,channel_error"));
       writeline(trace_file, trace_line);
+      file_open(info_trace_file, "ldpc_info_trace_k1024_r12.csv", write_mode);
+      write(info_trace_line, string'("frame,info_index,info_expected,info_decoded"));
+      writeline(info_trace_file, info_trace_line);
     end if;
     assert EBNO_DB >= -2.0 and EBNO_DB <= 12.0
       report "EBNO_DB outside intended test range [-2, 12] dB"
@@ -200,24 +205,22 @@ begin
           if frame_llr < 0 then hard_bit := 1; end if;
           channel_error_int := 0;
           if hard_bit /= tx_bit_int then channel_error_int := 1; end if;
-          decoded_int := -1;
-          if i < AR4JA_INFO_BITS then
-            decoded_int := 0;
-            if decoded_bits(i) = '1' then decoded_int := 1; end if;
-          end if;
           write(trace_line, integer'image(trial)); write(trace_line, string'(","));
           write(trace_line, integer'image(i)); write(trace_line, string'(","));
           write(trace_line, integer'image(tx_bit_int)); write(trace_line, string'(","));
           write(trace_line, integer'image(frame_llr)); write(trace_line, string'(","));
           write(trace_line, integer'image(hard_bit)); write(trace_line, string'(","));
-          write(trace_line, integer'image(channel_error_int)); write(trace_line, string'(","));
-          if i < AR4JA_INFO_BITS then
-            write(trace_line, integer'image(tx_bit_int)); write(trace_line, string'(","));
-            write(trace_line, integer'image(decoded_int));
-          else
-            write(trace_line, string'("-1,-1"));
-          end if;
+          write(trace_line, integer'image(channel_error_int));
           writeline(trace_file, trace_line);
+        end loop;
+        for b in 0 to AR4JA_INFO_BITS - 1 loop
+          decoded_int := 0;
+          if decoded_bits(b) = '1' then decoded_int := 1; end if;
+          write(info_trace_line, integer'image(trial)); write(info_trace_line, string'(","));
+          write(info_trace_line, integer'image(b)); write(info_trace_line, string'(","));
+          write(info_trace_line, integer'image(0)); write(info_trace_line, string'(","));
+          write(info_trace_line, integer'image(decoded_int));
+          writeline(info_trace_file, info_trace_line);
         end loop;
       end if;
 
@@ -240,7 +243,8 @@ begin
 
     if TRACE_ENABLE then
       file_close(trace_file);
-      report "TRACE: wrote ldpc_trace_k1024_r12.csv (one row per transmitted bit and frame)" severity note;
+      file_close(info_trace_file);
+      report "TRACE: wrote ldpc_trace_k1024_r12.csv and ldpc_info_trace_k1024_r12.csv" severity note;
     end if;
 
     if frame_errors = 0 then
