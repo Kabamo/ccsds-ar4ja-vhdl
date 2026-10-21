@@ -135,9 +135,7 @@ begin
     variable channel_error_int : integer;
   begin
     if TRACE_ENABLE then
-      write(output, string'("RX_TRACE,frame,tx_index,tx_bit,llr,hard_rx,channel_error"));
-      writeline(output, trace_line);
-      write(output, string'("INFO_TRACE,frame,info_index,info_expected,info_decoded"));
+      write(output, string'("type,frame,index,tx_bit,llr,hard_rx,channel_error,info_expected,info_decoded"));
       writeline(output, trace_line);
     end if;
     assert TRACE_BITS <= AR4JA_INFO_BITS
@@ -204,23 +202,22 @@ begin
           if frame_llr < 0 then hard_bit := 1; end if;
           channel_error_int := 0;
           if hard_bit /= tx_bit_int then channel_error_int := 1; end if;
-          write(trace_line, string'("RX_TRACE,"));
+          write(trace_line, string'("RX,"));
           write(trace_line, integer'image(trial)); write(trace_line, string'(","));
           write(trace_line, integer'image(i)); write(trace_line, string'(","));
           write(trace_line, integer'image(tx_bit_int)); write(trace_line, string'(","));
           write(trace_line, integer'image(frame_llr)); write(trace_line, string'(","));
           write(trace_line, integer'image(hard_bit)); write(trace_line, string'(","));
-          write(trace_line, integer'image(channel_error_int));
+          write(trace_line, integer'image(channel_error_int)); write(trace_line, string'(",,"));
           writeline(output, trace_line);
         end loop;
         for b in 0 to TRACE_BITS - 1 loop
           decoded_int := 0;
           if decoded_bits(b) = '1' then decoded_int := 1; end if;
-          write(trace_line, string'("INFO_TRACE,"));
+          write(trace_line, string'("INFO,"));
           write(trace_line, integer'image(trial)); write(trace_line, string'(","));
-          write(trace_line, integer'image(b)); write(trace_line, string'(","));
-          write(trace_line, integer'image(0)); write(trace_line, string'(","));
-          write(trace_line, integer'image(decoded_int));
+          write(trace_line, integer'image(b)); write(trace_line, string'(",,,,,"));
+          write(trace_line, string'("0,")); write(trace_line, integer'image(decoded_int));
           writeline(output, trace_line);
         end loop;
       end if;
@@ -243,8 +240,8 @@ begin
         real(N_FRAMES * AR4JA_TX_BITS)) severity note;
 
     if TRACE_ENABLE then
-      report "TRACE: CSV rows printed directly to simulator console; first " &
-        integer'image(TRACE_BITS) & " entries per frame" severity note;
+      report "TRACE: unified CSV table printed to simulator console; first " &
+        integer'image(TRACE_BITS) & " entries per trace type and frame" severity note;
     end if;
 
     if frame_errors = 0 then
