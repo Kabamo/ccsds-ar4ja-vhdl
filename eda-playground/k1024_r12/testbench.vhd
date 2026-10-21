@@ -22,8 +22,6 @@ entity tb_k1024_r12_awgn is
     N_FRAMES : positive := 2;
     SEED1_INIT : positive := 173;
     SEED2_INIT : positive := 947;
-    TRACE_ENABLE : boolean := true;
-    TRACE_BITS : positive := 64
   );
 end entity;
 
@@ -128,19 +126,8 @@ begin
     variable channel_bit_errors_total : natural := 0;
     variable frame_llr : integer;
     variable failed : boolean;
-    variable trace_line : line;
-    variable hard_bit : integer;
-    variable tx_bit_int : integer;
-    variable decoded_int : integer;
-    variable channel_error_int : integer;
+    variable output_line : line;
   begin
-    if TRACE_ENABLE then
-      write(output, string'("type,frame,index,tx_bit,llr,hard_rx,channel_error,info_expected,info_decoded"));
-      writeline(output, trace_line);
-    end if;
-    assert TRACE_BITS <= AR4JA_INFO_BITS
-      report "TRACE_BITS must not exceed AR4JA_INFO_BITS"
-      severity failure;
     assert EBNO_DB >= -2.0 and EBNO_DB <= 12.0
       report "EBNO_DB outside intended test range [-2, 12] dB"
       severity failure;
@@ -149,7 +136,6 @@ begin
     sigma := sqrt(sigma2);
     report "AWGN test start: seed1=" & integer'image(SEED1_INIT) &
       ", seed2=" & integer'image(SEED2_INIT) &
-      ", trace=" & boolean'image(TRACE_ENABLE) &
       ", Eb/N0=" & real'image(EBNO_DB) &
       " dB, sigma=" & real'image(sigma) &
       ", frames=" & integer'image(N_FRAMES) &
@@ -191,36 +177,19 @@ begin
       bit_errors_total := bit_errors_total + bit_errors_frame;
       if failed then frame_errors := frame_errors + 1; end if;
 
-      -- Print CSV rows directly to simulator stdout: no generated-file download.
-      -- Limit trace volume to the first TRACE_BITS entries of each frame.
-      if TRACE_ENABLE then
-        for i in 0 to TRACE_BITS - 1 loop
-          tx_bit_int := 0;
-          if expected_tx_bit(i) = '1' then tx_bit_int := 1; end if;
-          frame_llr := to_integer(frame(i));
-          hard_bit := 0;
-          if frame_llr < 0 then hard_bit := 1; end if;
-          channel_error_int := 0;
-          if hard_bit /= tx_bit_int then channel_error_int := 1; end if;
-          write(trace_line, string'("RX,"));
-          write(trace_line, integer'image(trial)); write(trace_line, string'(","));
-          write(trace_line, integer'image(i)); write(trace_line, string'(","));
-          write(trace_line, integer'image(tx_bit_int)); write(trace_line, string'(","));
-          write(trace_line, integer'image(frame_llr)); write(trace_line, string'(","));
-          write(trace_line, integer'image(hard_bit)); write(trace_line, string'(","));
-          write(trace_line, integer'image(channel_error_int)); write(trace_line, string'(",,"));
-          writeline(output, trace_line);
-        end loop;
-        for b in 0 to TRACE_BITS - 1 loop
-          decoded_int := 0;
-          if decoded_bits(b) = '1' then decoded_int := 1; end if;
-          write(trace_line, string'("INFO,"));
-          write(trace_line, integer'image(trial)); write(trace_line, string'(","));
-          write(trace_line, integer'image(b)); write(trace_line, string'(",,,,,"));
-          write(trace_line, string'("0,")); write(trace_line, integer'image(decoded_int));
-          writeline(output, trace_line);
-        end loop;
-      end if;
+      -- Print complete information-bit chains for manual comparison.
+      -- TX_INFO and RX_IP have the same length (AR4JA_INFO_BITS).
+      write(output_line, string'("TX_INFO : "));
+      for b in 0 to AR4JA_INFO_BITS - 1 loop
+        write(output_line, expected_info_bit(b));
+      end loop;
+      writeline(output, output_line);
+
+      write(output_line, string'("RX_IP   : "));
+      for b in 0 to AR4JA_INFO_BITS - 1 loop
+        write(output_line, decoded_bits(b));
+      end loop;
+      writeline(output, output_line);
 
       report "AWGN trial " & integer'image(trial) &
         ": status=" & ar4ja_decode_status_t'image(status) &
@@ -238,11 +207,6 @@ begin
         real(N_FRAMES * AR4JA_INFO_BITS)) &
       ", channel hard BER=" & real'image(real(channel_bit_errors_total) /
         real(N_FRAMES * AR4JA_TX_BITS)) severity note;
-
-    if TRACE_ENABLE then
-      report "TRACE: unified CSV table printed to simulator console; first " &
-        integer'image(TRACE_BITS) & " entries per trace type and frame" severity note;
-    end if;
 
     if frame_errors = 0 then
       report "PASS: all AWGN frames decoded correctly at requested Eb/N0" severity note;
