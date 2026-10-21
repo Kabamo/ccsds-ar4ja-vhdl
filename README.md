@@ -2,16 +2,29 @@
 
 Independent VHDL implementation targeting a Zynq UltraScale+ FPGA.
 
-## Fixed target mode
+## Supported configurations
 
-- CCSDS AR4JA, information length K = 1024
-- Code rate 1/2
-- 2048 transmitted LLRs per frame
-- 512 punctured internal variables, initialized with neutral LLR = 0
-- 2560 internal variable nodes and 1536 parity checks
-- 8-bit signed LLR/message datapath
-- Normalized min-sum algorithm, normalization factor 3/4
-- Intended integration target: Vivado / Zynq UltraScale+
+Six statically elaborated configurations are provided: K=1024 or K=4096, each at rates 1/2, 2/3, and 4/5. The original K=1024 rate-1/2 implementation remains available. The per-mode entities are specialized RTL modules; `rtl/ar4ja_configurable_decoder.vhd` is a common top-level wrapper that selects one mode at synthesis/elaboration time.
+
+| Generic | Values | Meaning |
+|---|---|---|
+| `K_BITS` | `1024`, `4096` | Information block length |
+| `RATE_ID` | `0`, `1`, `2` | Rate 1/2, 2/3, 4/5 respectively |
+
+Example VHDL instantiation for K=4096, rate 2/3:
+
+```vhdl
+u_ldpc : entity work.ar4ja_configurable_decoder
+  generic map (K_BITS => 4096, RATE_ID => 1)
+  port map (
+    clk => clk, rst => rst, start => start,
+    llr_in => llr_in, decoded_bits => decoded_bits,
+    busy => busy, done => done, status => status
+  );
+```
+
+The `llr_in` length is derived from K and RATE_ID: 2K for rate 1/2, 3K/2 for rate 2/3, and 5K/4 for rate 4/5. The wrapper chooses the specialized decoder at elaboration; changing generics requires re-elaboration/resynthesis, not a run-time mode switch. LLRs are signed 8-bit values; positive favors bit 0 and negative favors bit 1. The normalized min-sum datapath uses factor 3/4.
+
 
 ## User-facing frame contract
 
