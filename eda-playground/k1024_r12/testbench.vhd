@@ -12,13 +12,17 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
+use std.textio.all;
 use work.ldpc_fixed_pkg.all;
 use work.ar4ja_k1024_r12_frame_pkg.all;
 
 entity tb_k1024_r12_awgn is
   generic (
     EBNO_DB  : real := 3.0;
-    N_FRAMES : positive := 2
+    N_FRAMES : positive := 2;
+    SEED1_INIT : positive := 173;
+    SEED2_INIT : positive := 947;
+    TRACE_ENABLE : boolean := true
   );
 end entity;
 
@@ -110,8 +114,8 @@ begin
     );
 
   stimulus : process
-    variable seed1 : positive := 173;
-    variable seed2 : positive := 947;
+    variable seed1 : positive := SEED1_INIT;
+    variable seed2 : positive := SEED2_INIT;
     variable sigma2 : real;
     variable sigma : real;
     variable frame : ar4ja_llr_frame_t;
@@ -123,14 +127,28 @@ begin
     variable channel_bit_errors_total : natural := 0;
     variable frame_llr : integer;
     variable failed : boolean;
+    file trace_file : text;
+    variable trace_line : line;
+    variable hard_bit : integer;
+    variable tx_bit_int : integer;
+    variable decoded_int : integer;
+    variable channel_error_int : integer;
   begin
+    if TRACE_ENABLE then
+      file_open(trace_file, "ldpc_trace_k1024_r12.csv", write_mode);
+      write(trace_line, string'("frame,index,tx_bit,llr,hard_rx,channel_error,info_expected,info_decoded"));
+      writeline(trace_file, trace_line);
+    end if;
     assert EBNO_DB >= -2.0 and EBNO_DB <= 12.0
       report "EBNO_DB outside intended test range [-2, 12] dB"
       severity failure;
 
     sigma2 := 1.0 / (2.0 * (2.0 / (2.0 + 2.0)) * exp(log(10.0) * (EBNO_DB / 10.0)));
     sigma := sqrt(sigma2);
-    report "AWGN test start: Eb/N0=" & real'image(EBNO_DB) &
+    report "AWGN test start: seed1=" & integer'image(SEED1_INIT) &
+      ", seed2=" & integer'image(SEED2_INIT) &
+      ", trace=" & boolean'image(TRACE_ENABLE) &
+      ", Eb/N0=" & real'image(EBNO_DB) &
       " dB, sigma=" & real'image(sigma) &
       ", frames=" & integer'image(N_FRAMES) &
       ", LLR scale=" & real'image(LLR_SCALE) severity note;
@@ -171,6 +189,38 @@ begin
       bit_errors_total := bit_errors_total + bit_errors_frame;
       if failed then frame_errors := frame_errors + 1; end if;
 
+      -- CSV truth trace: one row per transmitted bit, including signed quantized
+      -- LLR, hard decision, channel error and decoded information bit.
+      if TRACE_ENABLE then
+        for i in 0 to AR4JA_TX_BITS - 1 loop
+          tx_bit_int := 0;
+          if expected_tx_bit(i) = '1' then tx_bit_int := 1; end if;
+          frame_llr := to_integer(frame(i));
+          hard_bit := 0;
+          if frame_llr < 0 then hard_bit := 1; end if;
+          channel_error_int := 0;
+          if hard_bit /= tx_bit_int then channel_error_int := 1; end if;
+          decoded_int := -1;
+          if i < AR4JA_INFO_BITS then
+            decoded_int := 0;
+            if decoded_bits(i) = '1' then decoded_int := 1; end if;
+          end if;
+          write(trace_line, integer'image(trial)); write(trace_line, string'(","));
+          write(trace_line, integer'image(i)); write(trace_line, string'(","));
+          write(trace_line, integer'image(tx_bit_int)); write(trace_line, string'(","));
+          write(trace_line, integer'image(frame_llr)); write(trace_line, string'(","));
+          write(trace_line, integer'image(hard_bit)); write(trace_line, string'(","));
+          write(trace_line, integer'image(channel_error_int)); write(trace_line, string'(","));
+          if i < AR4JA_INFO_BITS then
+            write(trace_line, integer'image(tx_bit_int)); write(trace_line, string'(","));
+            write(trace_line, integer'image(decoded_int));
+          else
+            write(trace_line, string'("-1,-1"));
+          end if;
+          writeline(trace_file, trace_line);
+        end loop;
+      end if;
+
       report "AWGN trial " & integer'image(trial) &
         ": status=" & ar4ja_decode_status_t'image(status) &
         ", channel hard errors=" & integer'image(channel_bit_errors_frame) &
@@ -187,6 +237,11 @@ begin
         real(N_FRAMES * AR4JA_INFO_BITS)) &
       ", channel hard BER=" & real'image(real(channel_bit_errors_total) /
         real(N_FRAMES * AR4JA_TX_BITS)) severity note;
+
+    if TRACE_ENABLE then
+      file_close(trace_file);
+      report "TRACE: wrote ldpc_trace_k1024_r12.csv (one row per transmitted bit and frame)" severity note;
+    end if;
 
     if frame_errors = 0 then
       report "PASS: all AWGN frames decoded correctly at requested Eb/N0" severity note;
