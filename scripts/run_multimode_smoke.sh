@@ -13,7 +13,7 @@ EBNO="${AWGN_EBNO_DB:-10.0}"
 NFRAMES="${AWGN_FRAMES:-2}"
 CSV="${AWGN_CSV:-$PWD/multimode_awgn_results.csv}"
 command -v "$GHDL" >/dev/null 2>&1 || { echo "ERROR: GHDL not found" >&2; exit 127; }
-echo "GHDL: $(" $GHDL " --version | head -n 1)"
+echo "GHDL: $("$GHDL" --version | head -n 1)
 echo "Campaign: Eb/N0=$EBNO dB; frames/mode=$NFRAMES"
 echo "CSV report: $CSV"
 
