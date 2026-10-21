@@ -57,15 +57,19 @@ package body ldpc_fixed_pkg is
   -- is representable as +128, then saturate it to the 7-bit magnitude max.
   function llr_magnitude(value : llr_t) return mag_t is
     variable wide_value : signed(8 downto 0);
+    variable abs_value  : signed(8 downto 0);
     variable magnitude  : unsigned(7 downto 0);
   begin
+    -- Widen before negation so -128 is representable as +128.
     wide_value := resize(value, wide_value'length);
     if value(7) = '1' then
-      magnitude := resize(unsigned(-wide_value), magnitude'length);
+      abs_value := -wide_value;
+      magnitude := unsigned(abs_value(7 downto 0));
     else
-      magnitude := resize(unsigned(wide_value), magnitude'length);
+      magnitude := unsigned(wide_value(7 downto 0));
     end if;
 
+    -- Saturate magnitudes >= 128 to the 7-bit maximum.
     if magnitude(7) = '1' then
       return to_unsigned(127, 7);
     else
