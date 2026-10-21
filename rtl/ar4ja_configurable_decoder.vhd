@@ -17,9 +17,7 @@ entity ar4ja_configurable_decoder is
     clk : in std_logic;
     rst : in std_logic;
     start : in std_logic;
-    llr_in : in ar4ja_llr_frame_t(0 to
-      (K_BITS * (case RATE_ID is when 0 => 2 when 1 => 3 when others => 5) /
-       (case RATE_ID is when 0 => 1 when 1 => 2 when others => 4)) - 1);
+    llr_in : in ar4ja_llr_frame_t(0 to ar4ja_tx_bits(K_BITS, RATE_ID) - 1);
     decoded_bits : out std_logic_vector(K_BITS-1 downto 0);
     busy : out std_logic;
     done : out std_logic;
