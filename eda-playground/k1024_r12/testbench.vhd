@@ -21,7 +21,7 @@ entity tb_k1024_r12_awgn is
     EBNO_DB  : real := 3.0;
     N_FRAMES : positive := 2;
     SEED1_INIT : positive := 173;
-    SEED2_INIT : positive := 947;
+    SEED2_INIT : positive := 947
   );
 end entity;
 
@@ -181,13 +181,21 @@ begin
       -- TX_INFO and RX_IP have the same length (AR4JA_INFO_BITS).
       write(output_line, string'("TX_INFO : "));
       for b in 0 to AR4JA_INFO_BITS - 1 loop
-        write(output_line, expected_info_bit(b));
+        if expected_info_bit(b) = '1' then
+          write(output_line, character'('1'));
+        else
+          write(output_line, character'('0'));
+        end if;
       end loop;
       writeline(output, output_line);
 
       write(output_line, string'("RX_IP   : "));
       for b in 0 to AR4JA_INFO_BITS - 1 loop
-        write(output_line, decoded_bits(b));
+        if decoded_bits(b) = '1' then
+          write(output_line, character'('1'));
+        else
+          write(output_line, character'('0'));
+        end if;
       end loop;
       writeline(output, output_line);
 
