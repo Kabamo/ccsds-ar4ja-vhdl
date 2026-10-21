@@ -210,7 +210,7 @@ and the punctured identity block. `sim/tb_<tag>_awgn.vhd` runs a reproducible
 AWGN smoke test against the all-zero valid codeword; it is not a replacement for
 independent nonzero golden vectors or FER characterization.
 
-### Run the six-mode smoke suite
+### Run the six-mode smoke / AWGN campaign
 
 From the repository root with GHDL installed:
 
@@ -218,9 +218,22 @@ From the repository root with GHDL installed:
 bash scripts/run_multimode_smoke.sh
 ```
 
-The script analyzes all six VHDL decoder variants and runs the six graph checks
-plus one-frame AWGN smoke tests at 10 dB. The current execution environment did
-not have GHDL installed, so these newly added benches have **not yet been
+The script analyzes the six specialized decoder variants once, runs all six graph
+structural checks, then runs two AWGN frames per mode at 10 dB by default. It
+writes `multimode_awgn_results.csv` in the repository root; the `summary` column
+preserves each bench's FER, information BER and channel hard-decision BER summary.
+The campaign can be configured without editing VHDL:
+
+```bash
+AWGN_EBNO_DB=3.0 AWGN_FRAMES=2 bash scripts/run_multimode_smoke.sh
+AWGN_EBNO_DB=2.0 AWGN_FRAMES=20 AWGN_CSV=/tmp/ar4ja.csv bash scripts/run_multimode_smoke.sh
+```
+
+This reuses one GHDL work library and compiles the RTL only once per campaign;
+the six decoders are simulated sequentially, so this is not a six-decoder
+parallel hardware simulation. Two frames per mode are a quick smoke test only,
+not enough to estimate FER reliably. The current execution environment did not
+have GHDL installed, so the script and newly added benches have **not yet been
 executed here**. Treat the RTL as implementation-in-progress until the script
 passes on a GHDL installation and independent reference vectors are added for
 each mode. Vivado synthesis, timing and resource measurements also remain open.
