@@ -140,6 +140,9 @@ begin
       write(output, string'("INFO_TRACE,frame,info_index,info_expected,info_decoded"));
       writeline(output, trace_line);
     end if;
+    assert TRACE_BITS <= AR4JA_INFO_BITS
+      report "TRACE_BITS must not exceed AR4JA_INFO_BITS"
+      severity failure;
     assert EBNO_DB >= -2.0 and EBNO_DB <= 12.0
       report "EBNO_DB outside intended test range [-2, 12] dB"
       severity failure;
@@ -193,7 +196,7 @@ begin
       -- Print CSV rows directly to simulator stdout: no generated-file download.
       -- Limit trace volume to the first TRACE_BITS entries of each frame.
       if TRACE_ENABLE then
-        for i in 0 to integer'min(AR4JA_TX_BITS, TRACE_BITS) - 1 loop
+        for i in 0 to TRACE_BITS - 1 loop
           tx_bit_int := 0;
           if expected_tx_bit(i) = '1' then tx_bit_int := 1; end if;
           frame_llr := to_integer(frame(i));
@@ -210,7 +213,7 @@ begin
           write(trace_line, integer'image(channel_error_int));
           writeline(output, trace_line);
         end loop;
-        for b in 0 to integer'min(AR4JA_INFO_BITS, TRACE_BITS) - 1 loop
+        for b in 0 to TRACE_BITS - 1 loop
           decoded_int := 0;
           if decoded_bits(b) = '1' then decoded_int := 1; end if;
           write(trace_line, string'("INFO_TRACE,"));
