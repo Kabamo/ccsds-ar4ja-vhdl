@@ -61,9 +61,9 @@ package body ldpc_fixed_pkg is
   begin
     wide_value := resize(value, wide_value'length);
     if value(7) = '1' then
-      magnitude := unsigned(-wide_value);
+      magnitude := resize(unsigned(-wide_value), magnitude'length);
     else
-      magnitude := unsigned(wide_value);
+      magnitude := resize(unsigned(wide_value), magnitude'length);
     end if;
 
     if magnitude(7) = '1' then
