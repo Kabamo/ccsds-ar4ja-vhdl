@@ -22,7 +22,8 @@ entity tb_k1024_r12_awgn is
     N_FRAMES : positive := 2;
     SEED1_INIT : positive := 173;
     SEED2_INIT : positive := 947;
-    TRACE_ENABLE : boolean := true
+    TRACE_ENABLE : boolean := true;
+    TRACE_BITS : positive := 64
   );
 end entity;
 
@@ -127,22 +128,17 @@ begin
     variable channel_bit_errors_total : natural := 0;
     variable frame_llr : integer;
     variable failed : boolean;
-    file trace_file : text;
-    file info_trace_file : text;
     variable trace_line : line;
-    variable info_trace_line : line;
     variable hard_bit : integer;
     variable tx_bit_int : integer;
     variable decoded_int : integer;
     variable channel_error_int : integer;
   begin
     if TRACE_ENABLE then
-      file_open(trace_file, "ldpc_trace_k1024_r12.csv", write_mode);
-      write(trace_line, string'("frame,tx_index,tx_bit,llr,hard_rx,channel_error"));
-      writeline(trace_file, trace_line);
-      file_open(info_trace_file, "ldpc_info_trace_k1024_r12.csv", write_mode);
-      write(info_trace_line, string'("frame,info_index,info_expected,info_decoded"));
-      writeline(info_trace_file, info_trace_line);
+      write(output, string'("RX_TRACE,frame,tx_index,tx_bit,llr,hard_rx,channel_error"));
+      writeline(output, trace_line);
+      write(output, string'("INFO_TRACE,frame,info_index,info_expected,info_decoded"));
+      writeline(output, trace_line);
     end if;
     assert EBNO_DB >= -2.0 and EBNO_DB <= 12.0
       report "EBNO_DB outside intended test range [-2, 12] dB"
@@ -194,10 +190,10 @@ begin
       bit_errors_total := bit_errors_total + bit_errors_frame;
       if failed then frame_errors := frame_errors + 1; end if;
 
-      -- CSV truth trace: one row per transmitted bit, including signed quantized
-      -- LLR, hard decision, channel error and decoded information bit.
+      -- Print CSV rows directly to simulator stdout: no generated-file download.
+      -- Limit trace volume to the first TRACE_BITS entries of each frame.
       if TRACE_ENABLE then
-        for i in 0 to AR4JA_TX_BITS - 1 loop
+        for i in 0 to integer'min(AR4JA_TX_BITS, TRACE_BITS) - 1 loop
           tx_bit_int := 0;
           if expected_tx_bit(i) = '1' then tx_bit_int := 1; end if;
           frame_llr := to_integer(frame(i));
@@ -205,22 +201,24 @@ begin
           if frame_llr < 0 then hard_bit := 1; end if;
           channel_error_int := 0;
           if hard_bit /= tx_bit_int then channel_error_int := 1; end if;
+          write(trace_line, string'("RX_TRACE,"));
           write(trace_line, integer'image(trial)); write(trace_line, string'(","));
           write(trace_line, integer'image(i)); write(trace_line, string'(","));
           write(trace_line, integer'image(tx_bit_int)); write(trace_line, string'(","));
           write(trace_line, integer'image(frame_llr)); write(trace_line, string'(","));
           write(trace_line, integer'image(hard_bit)); write(trace_line, string'(","));
           write(trace_line, integer'image(channel_error_int));
-          writeline(trace_file, trace_line);
+          writeline(output, trace_line);
         end loop;
-        for b in 0 to AR4JA_INFO_BITS - 1 loop
+        for b in 0 to integer'min(AR4JA_INFO_BITS, TRACE_BITS) - 1 loop
           decoded_int := 0;
           if decoded_bits(b) = '1' then decoded_int := 1; end if;
-          write(info_trace_line, integer'image(trial)); write(info_trace_line, string'(","));
-          write(info_trace_line, integer'image(b)); write(info_trace_line, string'(","));
-          write(info_trace_line, integer'image(0)); write(info_trace_line, string'(","));
-          write(info_trace_line, integer'image(decoded_int));
-          writeline(info_trace_file, info_trace_line);
+          write(trace_line, string'("INFO_TRACE,"));
+          write(trace_line, integer'image(trial)); write(trace_line, string'(","));
+          write(trace_line, integer'image(b)); write(trace_line, string'(","));
+          write(trace_line, integer'image(0)); write(trace_line, string'(","));
+          write(trace_line, integer'image(decoded_int));
+          writeline(output, trace_line);
         end loop;
       end if;
 
@@ -242,9 +240,8 @@ begin
         real(N_FRAMES * AR4JA_TX_BITS)) severity note;
 
     if TRACE_ENABLE then
-      file_close(trace_file);
-      file_close(info_trace_file);
-      report "TRACE: wrote ldpc_trace_k1024_r12.csv and ldpc_info_trace_k1024_r12.csv" severity note;
+      report "TRACE: CSV rows printed directly to simulator console; first " &
+        integer'image(TRACE_BITS) & " entries per frame" severity note;
     end if;
 
     if frame_errors = 0 then
