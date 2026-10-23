@@ -247,6 +247,8 @@ Des scripts de référence sont disponibles dans `scripts/`. Ils utilisent uniqu
 - `scripts/ar4ja_encoder.py` : encodeur seul, avec export possible du mot de code.
 - `scripts/ar4ja_decoder.py` : décodeur normalized min-sum seul, avec mode AWGN ou LLR sans bruit.
 
+La chaîne complète génère aussi par défaut `bits_envoyes_recus.csv` dans le répertoire courant, avec exactement deux colonnes : `bit_envoye` (avant inversion) et `bit_recu` (après inversion). Chaque ligne correspond à un bit transmis. Pour choisir un autre emplacement, ajoutez `--csv-out chemin/vers/fichier.csv`.
+
 Exemple PowerShell depuis la racine du dépôt :
 
 ```powershell
