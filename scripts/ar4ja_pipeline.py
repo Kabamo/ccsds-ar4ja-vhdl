@@ -6,6 +6,7 @@ déterministe), pas une simulation AWGN. Le décodeur est une référence logici
 pas un modèle cycle-par-cycle du RTL VHDL.
 """
 import argparse
+import csv
 import random
 import re
 import sys
@@ -160,7 +161,7 @@ def show_bits(label, bits, width):
         print("  {:>5}-{:<5} {}".format(offset, end - 1, bits[offset:end]))
 
 
-def run_pipeline(matrix, info_text, errors=0, seed=12345, iterations=30, alpha=0.8, width=128):
+def run_pipeline(matrix, info_text, errors=0, seed=12345, iterations=30, alpha=0.8, width=128, csv_out=Path("bits_envoyes_recus.csv")):
     rows = read_rows(matrix)
     k, rate = matrix_mode(matrix)
     m = len(rows)
@@ -191,6 +192,11 @@ def run_pipeline(matrix, info_text, errors=0, seed=12345, iterations=30, alpha=0
     for pos in positions:
         corrupted[pos] ^= 1
     corrupted_text = "".join(map(str, corrupted))
+    with Path(csv_out).open("w", newline="", encoding="utf-8-sig") as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(["bit_envoye", "bit_recu"])
+        writer.writerows(zip(tx, corrupted))
+    print("CSV bits envoyés/reçus écrit : " + str(csv_out))
     llr = [20.0 if bit == 0 else -20.0 for bit in corrupted]
     decoded, used, sw_dec = decode_normalized_min_sum(rows, n, tx_bits, llr, k, iterations, alpha)
     output = "".join(map(str, decoded[:k]))
@@ -237,6 +243,8 @@ def main():
     parser.add_argument("--iterations", type=int, default=30)
     parser.add_argument("--alpha", type=float, default=0.8)
     parser.add_argument("--width", type=int, default=128)
+    parser.add_argument("--csv-out", type=Path, default=Path("bits_envoyes_recus.csv"),
+                        help="Chemin du CSV à deux colonnes (bit_envoye, bit_recu).")
     args = parser.parse_args()
     try:
         k, _ = matrix_mode(args.matrix)
@@ -245,7 +253,7 @@ def main():
         if errors is None:
             raw = input("Nombre de bits transmis à inverser [0] : ").strip()
             errors = int(raw) if raw else 0
-        return run_pipeline(args.matrix, info, errors, args.seed, args.iterations, args.alpha, args.width)
+        return run_pipeline(args.matrix, info, errors, args.seed, args.iterations, args.alpha, args.width, args.csv_out)
     except (OSError, ValueError, RuntimeError) as exc:
         print("ERREUR : " + str(exc), file=sys.stderr)
         return 2
