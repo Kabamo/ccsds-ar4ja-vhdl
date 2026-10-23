@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
-"""Generate CCSDS AR4JA H matrices and row-adjacency CSVs.
+"""Generate CCSDS AR4JA H matrices and VHDL-ready row-adjacency snippets.
 
 Dependencies: numpy, scipy.
 Permutation tables/function are imported from GalenMui's reference model:
 https://github.com/GalenMui/ccsds-ar4ja-ldpc-decoder
 Run with that repository's root on PYTHONPATH.
 
-CSV convention:
-  - one CSV row per row of H, in row order
-  - column indices are zero-based
-  - -1 pads unused entries; no header
+Adjacency snippet convention:
+  - one parenthesized row per row of H, in row order
+  - zero-based column indices
+  - -1 pads unused entries; each row ends with a comma
   - at least six entries per row, expanding if needed
+  - intended as a fragment to paste inside a VHDL aggregate
+  - use an integer-based VHDL element type because padding is -1
   - full includes punctured columns; tx drops the final M columns
 
 This is an exploratory matrix generator. Validate each rate's block structure
@@ -106,21 +108,21 @@ def sparse(rows: list[set[int]], ncols: int):
                       shape=(len(rows), ncols), dtype="uint8").tocsr()
 
 
-def write_adjacency_csv(path: Path, matrix, min_width: int = 6) -> int:
-    """Write one H check per CSV row, with zero-based neighboring columns."""
+def write_adjacency_vhdl_fragment(path: Path, matrix, min_width: int = 6) -> int:
+    """Write one VHDL-style parenthesized row per H check, ending in a comma."""
     degrees = [
         int(matrix.indptr[r + 1] - matrix.indptr[r])
         for r in range(matrix.shape[0])
     ]
     width = max(min_width, max(degrees, default=0))
-    with path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
+    with path.open("w", encoding="utf-8", newline="\n") as f:
         for r in range(matrix.shape[0]):
             cols = sorted(
                 int(c) for c in
                 matrix.indices[matrix.indptr[r]:matrix.indptr[r + 1]]
             )
-            writer.writerow(cols + [-1] * (width - len(cols)))
+            values = cols + [-1] * (width - len(cols))
+            f.write("(" + ", ".join(str(v) for v in values) + "),\n")
     return width
 
 
@@ -141,11 +143,11 @@ def main() -> None:
             htx = hfull[:, :full_cols - m].tocsr()
             stem = f"H_rate_{rate}_k_{info_bits}"
 
-            full_width = write_adjacency_csv(
-                OUT / f"{stem}_full_adj.csv", hfull
+            full_width = write_adjacency_vhdl_fragment(
+                OUT / f"{stem}_full_adj.vhd.inc", hfull
             )
-            tx_width = write_adjacency_csv(
-                OUT / f"{stem}_tx_adj.csv", htx
+            tx_width = write_adjacency_vhdl_fragment(
+                OUT / f"{stem}_tx_adj.vhd.inc", htx
             )
             save_npz(OUT / f"{stem}_full.npz", hfull)
             save_npz(OUT / f"{stem}_tx.npz", htx)
@@ -160,14 +162,14 @@ def main() -> None:
                 "full_nnz": hfull.nnz,
                 "transmitted_nnz": htx.nnz,
                 "full_max_row_degree": max((len(c) for c in rows), default=0),
-                "full_adjacency_csv_width": full_width,
-                "tx_adjacency_csv_width": tx_width,
+                "full_adjacency_width": full_width,
+                "tx_adjacency_width": tx_width,
                 "full_density_percent":
                     100 * hfull.nnz / (hfull.shape[0] * hfull.shape[1]),
             })
             print(
                 f"{stem}: M={m}, H_full={hfull.shape}, H_tx={htx.shape}, "
-                f"CSV widths full/tx={full_width}/{tx_width}"
+                f"VHDL fragment widths full/tx={full_width}/{tx_width}"
             )
 
     with (OUT / "summary.csv").open("w", newline="", encoding="utf-8") as f:
@@ -176,8 +178,10 @@ def main() -> None:
         writer.writerows(summary)
 
     (OUT / "README.txt").write_text(
-        "Generated sparse CCSDS AR4JA H matrices and adjacency CSVs.\n"
-        "Adjacency CSVs use zero-based column indices; -1 is padding; no header.\n"
+        "Generated sparse CCSDS AR4JA H matrices and VHDL adjacency fragments.\n"
+        "Each fragment line is a parenthesized row ending with a comma.\n"
+        "Indices are zero-based; -1 pads unused entries. Use an integer-based\n"
+        "VHDL element type so -1 is representable.\n"
         "full includes final M punctured columns; tx drops those columns.\n"
         "Validate the rate constructions against CCSDS 131.0-B-5.\n",
         encoding="utf-8",
