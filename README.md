@@ -237,3 +237,28 @@ have GHDL installed, so the script and newly added benches have **not yet been
 executed here**. Treat the RTL as implementation-in-progress until the script
 passes on a GHDL installation and independent reference vectors are added for
 each mode. Vivado synthesis, timing and resource measurements also remain open.
+
+
+## Python : chaîne logicielle encodeur -> erreurs -> décodeur
+
+Des scripts de référence sont disponibles dans `scripts/`. Ils utilisent uniquement la bibliothèque standard de Python.
+
+- `scripts/ar4ja_pipeline.py` : chaîne complète de test, avec affichage de l'entrée information, du mot de code complet, des bits transmis, des positions inversées, du mot reçu par le décodeur et de la sortie information décodée.
+- `scripts/ar4ja_encoder.py` : encodeur seul, avec export possible du mot de code.
+- `scripts/ar4ja_decoder.py` : décodeur normalized min-sum seul, avec mode AWGN ou LLR sans bruit.
+
+Exemple PowerShell depuis la racine du dépôt :
+
+```powershell
+python scripts/ar4ja_pipeline.py Matrices_H/H_rate_1_2_k_1024_full_adj.vhd.inc --info 000... --errors 10 --seed 12345
+```
+
+Remplacez `000...` par une chaîne de **1024 bits** pour K=1024, ou utilisez `--info` absent pour saisir la chaîne interactivement. `--errors 10` inverse exactement 10 bits distincts parmi les bits transmis; `--seed` rend les positions reproductibles. Pour afficher toute la sortie, les chaînes longues sont coupées en lignes de 128 bits. Le résultat affiche `PASS` si la sortie information est identique à l'entrée et si le syndrome est nul.
+
+Exemple interactif :
+
+```powershell
+python scripts/ar4ja_pipeline.py Matrices_H/H_rate_1_2_k_1024_full_adj.vhd.inc
+```
+
+**Limites de validation :** cette chaîne est une référence logicielle destinée à comparer les vecteurs et les erreurs avec la simulation VHDL. L'injection d'erreurs inverse des bits transmis de façon déterministe; ce n'est pas une simulation AWGN. L'encodeur suppose que les K premiers bits sont systématiques et que les bits transmis sont le préfixe du mot complet, avec les bits poncturés à la fin. Il vérifie le syndrome du mot encodé et s'arrête avec un message explicite si la sous-matrice de parité choisie est singulière. Les conventions de poncturation et les six modes doivent être vérifiés contre les packages et vecteurs de référence du projet avant d'utiliser les résultats comme validation de conformité CCSDS.
