@@ -247,7 +247,7 @@ Des scripts de référence sont disponibles dans `scripts/`. Ils utilisent uniqu
 - `scripts/ar4ja_encoder.py` : encodeur seul, avec export possible du mot de code.
 - `scripts/ar4ja_decoder.py` : décodeur normalized min-sum seul, avec mode AWGN ou LLR sans bruit.
 
-La chaîne complète génère aussi par défaut `bits_envoyes_recus.csv` dans le répertoire courant, avec exactement deux colonnes : `bit_envoye` (avant inversion) et `bit_recu` (après inversion). Chaque ligne correspond à un bit transmis. Pour choisir un autre emplacement, ajoutez `--csv-out chemin/vers/fichier.csv`.
+La chaîne complète génère aussi par défaut `bits_envoyes_recus.csv` dans le répertoire courant, avec exactement deux colonnes : `bits_envoyes` (chaîne complète avant inversion) et `bits_recus` (chaîne complète après inversion). Chaque ligne de données correspond à une trame complète : les milliers de bits sont stockés dans une seule cellule, sans être séparés bit par bit. Vous pouvez donc copier la chaîne de la colonne `bits_envoyes` puis utiliser Ctrl+F dans `bits_recus` pour rechercher la chaîne entière. Une exécution du script produit une ligne de données ; pour comparer plusieurs trames, exécutez le script pour chaque trame et conservez/exportez chaque résultat. Pour choisir un autre emplacement, ajoutez `--csv-out chemin/vers/fichier.csv`.
 
 Exemple PowerShell depuis la racine du dépôt :
 
