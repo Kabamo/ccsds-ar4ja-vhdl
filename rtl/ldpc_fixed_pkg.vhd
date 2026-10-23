@@ -116,8 +116,8 @@ package body ldpc_fixed_pkg is
     inputs  : in  llr_array_t;
     outputs : out llr_array_t
   ) is
-    -- The decoder's maximum check-node degree is six. Explicit ranges keep
-    -- these temporaries narrow instead of carrying unconstrained integer widths.
+    -- Supports the generated AR4JA row degrees up to 18 for rate 4/5.
+    -- Explicit ranges keep these temporaries narrow instead of using integer-width datapaths.
     variable min1            : integer range 0 to 128 := 128;
     variable min2            : integer range 0 to 128 := 128;
     variable min1_index      : integer := -1;

@@ -2,16 +2,29 @@
 
 Independent VHDL implementation targeting a Zynq UltraScale+ FPGA.
 
-## Fixed target mode
+## Supported configurations
 
-- CCSDS AR4JA, information length K = 1024
-- Code rate 1/2
-- 2048 transmitted LLRs per frame
-- 512 punctured internal variables, initialized with neutral LLR = 0
-- 2560 internal variable nodes and 1536 parity checks
-- 8-bit signed LLR/message datapath
-- Normalized min-sum algorithm, normalization factor 3/4
-- Intended integration target: Vivado / Zynq UltraScale+
+Six statically elaborated configurations are provided: K=1024 or K=4096, each at rates 1/2, 2/3, and 4/5. The original K=1024 rate-1/2 implementation remains available. The per-mode entities are specialized RTL modules; `rtl/ar4ja_configurable_decoder.vhd` is a common top-level wrapper that selects one mode at synthesis/elaboration time.
+
+| Generic | Values | Meaning |
+|---|---|---|
+| `K_BITS` | `1024`, `4096` | Information block length |
+| `RATE_ID` | `0`, `1`, `2` | Rate 1/2, 2/3, 4/5 respectively |
+
+Example VHDL instantiation for K=4096, rate 2/3:
+
+```vhdl
+u_ldpc : entity work.ar4ja_configurable_decoder
+  generic map (K_BITS => 4096, RATE_ID => 1)
+  port map (
+    clk => clk, rst => rst, start => start,
+    llr_in => llr_in, decoded_bits => decoded_bits,
+    busy => busy, done => done, status => status
+  );
+```
+
+The `llr_in` length is derived from K and RATE_ID: 2K for rate 1/2, 3K/2 for rate 2/3, and 5K/4 for rate 4/5. The wrapper chooses the specialized decoder at elaboration; changing generics requires re-elaboration/resynthesis, not a run-time mode switch. LLRs are signed 8-bit values; positive favors bit 0 and negative favors bit 1. The normalized min-sum datapath uses factor 3/4.
+
 
 ## User-facing frame contract
 
@@ -170,3 +183,82 @@ Channel assumptions:
 - The transmitted frame is a valid published reference codeword, not a randomly generated information frame. This is sufficient for initial channel/decoder validation, but broader confidence should later use multiple codewords and many frames per SNR.
 
 A frame counts as a frame error if the decoder does not report convergence **or** any of the 1024 decoded information bits is wrong. A completed simulation is not automatically a passing result: inspect the per-frame lines and the final AWGN summary. User-reported exploratory results show 19/20 frame failures at 1.0 dB, 8/15 at 1.25 dB, 2/15 at 1.55 dB, 0/15 at 1.7 dB, and 0/30 at 2.0 dB. The 1.5 and 1.6 dB runs were interrupted after 21 frames (exit 137). See `docs/decoder-test-results.md` for the complete table and caveats. These short runs are a smoke test, not enough to establish a statistically meaningful waterfall/FER curve.
+
+
+## Multimode VHDL implementation (feature branch)
+
+The branch now contains generated graph packages, frame contracts, decoder RTL and
+self-checking structural/AWGN smoke benches for the six requested operating points.
+Each decoder uses the existing signed 8-bit fixed-point helpers and normalized
+min-sum factor 3/4. The higher-rate graphs use the CCSDS 131.0-B-5 block extension
+matrices and permutation tables, not a copied rate-1/2 graph with altered constants.
+
+| Decoder entity | Information bits | Rate | Transmitted LLRs | Checks | Internal variables | Max row degree |
+|---|---:|:---:|---:|---:|---:|---:|
+| `ar4ja_k1024_r12_decoder` | 1024 | 1/2 | 2048 | 1536 | 2560 | 6 |
+| `ar4ja_k1024_r23_decoder` | 1024 | 2/3 | 1536 | 768 | 1792 | 10 |
+| `ar4ja_k1024_r45_decoder` | 1024 | 4/5 | 1280 | 384 | 1408 | 18 |
+| `ar4ja_k4096_r12_decoder` | 4096 | 1/2 | 8192 | 6144 | 10240 | 6 |
+| `ar4ja_k4096_r23_decoder` | 4096 | 2/3 | 6144 | 3072 | 7168 | 10 |
+| `ar4ja_k4096_r45_decoder` | 4096 | 4/5 | 5120 | 1536 | 5632 | 18 |
+
+For each `k*_r*` tag, `rtl/ar4ja_<tag>_graph_pkg.vhd` contains the sparse graph,
+`rtl/ar4ja_<tag>_frame_pkg.vhd` the frame contract, and
+`rtl/ar4ja_<tag>_decoder.vhd` the decoder entity. The matching
+`sim/tb_<tag>_graph.vhd` checks dimensions, sorted unique edges, index ranges
+and the punctured identity block. `sim/tb_<tag>_awgn.vhd` runs a reproducible
+AWGN smoke test against the all-zero valid codeword; it is not a replacement for
+independent nonzero golden vectors or FER characterization.
+
+### Run the six-mode smoke / AWGN campaign
+
+From the repository root with GHDL installed:
+
+```bash
+bash scripts/run_multimode_smoke.sh
+```
+
+The script analyzes the six specialized decoder variants once, runs all six graph
+structural checks, then runs two AWGN frames per mode at 10 dB by default. It
+writes `multimode_awgn_results.csv` in the repository root; the `summary` column
+preserves each bench's FER, information BER and channel hard-decision BER summary.
+The campaign can be configured without editing VHDL:
+
+```bash
+AWGN_EBNO_DB=3.0 AWGN_FRAMES=2 bash scripts/run_multimode_smoke.sh
+AWGN_EBNO_DB=2.0 AWGN_FRAMES=20 AWGN_CSV=/tmp/ar4ja.csv bash scripts/run_multimode_smoke.sh
+```
+
+This reuses one GHDL work library and compiles the RTL only once per campaign;
+the six decoders are simulated sequentially, so this is not a six-decoder
+parallel hardware simulation. Two frames per mode are a quick smoke test only,
+not enough to estimate FER reliably. The current execution environment did not
+have GHDL installed, so the script and newly added benches have **not yet been
+executed here**. Treat the RTL as implementation-in-progress until the script
+passes on a GHDL installation and independent reference vectors are added for
+each mode. Vivado synthesis, timing and resource measurements also remain open.
+
+
+## Python : chaîne logicielle encodeur -> erreurs -> décodeur
+
+Des scripts de référence sont disponibles dans `scripts/`. Ils utilisent uniquement la bibliothèque standard de Python.
+
+- `scripts/ar4ja_pipeline.py` : chaîne complète de test, avec affichage de l'entrée information, du mot de code complet, des bits transmis, des positions inversées, du mot reçu par le décodeur et de la sortie information décodée.
+- `scripts/ar4ja_encoder.py` : encodeur seul, avec export possible du mot de code.
+- `scripts/ar4ja_decoder.py` : décodeur normalized min-sum seul, avec mode AWGN ou LLR sans bruit.
+
+Exemple PowerShell depuis la racine du dépôt :
+
+```powershell
+python scripts/ar4ja_pipeline.py Matrices_H/H_rate_1_2_k_1024_full_adj.vhd.inc --info 000... --errors 10 --seed 12345
+```
+
+Remplacez `000...` par une chaîne de **1024 bits** pour K=1024, ou utilisez `--info` absent pour saisir la chaîne interactivement. `--errors 10` inverse exactement 10 bits distincts parmi les bits transmis; `--seed` rend les positions reproductibles. Pour afficher toute la sortie, les chaînes longues sont coupées en lignes de 128 bits. Le résultat affiche `PASS` si la sortie information est identique à l'entrée et si le syndrome est nul.
+
+Exemple interactif :
+
+```powershell
+python scripts/ar4ja_pipeline.py Matrices_H/H_rate_1_2_k_1024_full_adj.vhd.inc
+```
+
+**Limites de validation :** cette chaîne est une référence logicielle destinée à comparer les vecteurs et les erreurs avec la simulation VHDL. L'injection d'erreurs inverse des bits transmis de façon déterministe; ce n'est pas une simulation AWGN. L'encodeur suppose que les K premiers bits sont systématiques et que les bits transmis sont le préfixe du mot complet, avec les bits poncturés à la fin. Il vérifie le syndrome du mot encodé et s'arrête avec un message explicite si la sous-matrice de parité choisie est singulière. Les conventions de poncturation et les six modes doivent être vérifiés contre les packages et vecteurs de référence du projet avant d'utiliser les résultats comme validation de conformité CCSDS.
