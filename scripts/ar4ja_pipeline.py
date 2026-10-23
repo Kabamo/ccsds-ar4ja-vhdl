@@ -194,9 +194,11 @@ def run_pipeline(matrix, info_text, errors=0, seed=12345, iterations=30, alpha=0
     corrupted_text = "".join(map(str, corrupted))
     with Path(csv_out).open("w", newline="", encoding="utf-8-sig") as csv_file:
         writer = csv.writer(csv_file)
-        writer.writerow(["bit_envoye", "bit_recu"])
-        writer.writerows(zip(tx, corrupted))
-    print("CSV bits envoyés/reçus écrit : " + str(csv_out))
+        writer.writerow(["bits_envoyes", "bits_recus"])
+        # Une cellule contient la chaîne complète, afin de pouvoir la copier/coller
+        # et rechercher la chaîne entière dans Excel avec Ctrl+F.
+        writer.writerow([tx_text, corrupted_text])
+    print("CSV chaînes complètes envoyées/reçues écrit : " + str(csv_out))
     llr = [20.0 if bit == 0 else -20.0 for bit in corrupted]
     decoded, used, sw_dec = decode_normalized_min_sum(rows, n, tx_bits, llr, k, iterations, alpha)
     output = "".join(map(str, decoded[:k]))
@@ -244,7 +246,7 @@ def main():
     parser.add_argument("--alpha", type=float, default=0.8)
     parser.add_argument("--width", type=int, default=128)
     parser.add_argument("--csv-out", type=Path, default=Path("bits_envoyes_recus.csv"),
-                        help="Chemin du CSV à deux colonnes (bit_envoye, bit_recu).")
+                        help="Chemin du CSV à deux colonnes contenant chacune une chaîne binaire complète.")
     args = parser.parse_args()
     try:
         k, _ = matrix_mode(args.matrix)
