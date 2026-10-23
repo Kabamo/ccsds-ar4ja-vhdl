@@ -250,10 +250,10 @@ Des scripts de référence sont disponibles dans `scripts/`. Ils utilisent uniqu
 Exemple PowerShell depuis la racine du dépôt :
 
 ```powershell
-python scripts/ar4ja_pipeline.py Matrices_H/H_rate_1_2_k_1024_full_adj.vhd.inc --info 000... --errors 10 --seed 12345
+python scripts/ar4ja_pipeline.py Matrices_H/H_rate_1_2_k_1024_full_adj.vhd.inc --errors 10 --seed 12345
 ```
 
-Remplacez `000...` par une chaîne de **1024 bits** pour K=1024, ou utilisez `--info` absent pour saisir la chaîne interactivement. `--errors 10` inverse exactement 10 bits distincts parmi les bits transmis; `--seed` rend les positions reproductibles. Pour afficher toute la sortie, les chaînes longues sont coupées en lignes de 128 bits. Le résultat affiche `PASS` si la sortie information est identique à l'entrée et si le syndrome est nul.
+Comme `--info` est absent dans cet exemple, le script demande la chaîne de **1024 bits** interactivement. `--errors 10` inverse exactement 10 bits distincts parmi les bits transmis; `--seed` rend les positions reproductibles. Pour afficher toute la sortie, les chaînes longues sont coupées en lignes de 128 bits. Le résultat affiche `PASS` si la sortie information est identique à l'entrée et si le syndrome est nul.
 
 Exemple interactif :
 
