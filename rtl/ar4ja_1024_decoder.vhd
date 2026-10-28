@@ -78,12 +78,15 @@ begin
             q := (others => (others => '0'));
             r_new := (others => (others => '0'));
 
-            for e in 0 to degree - 1 loop
-              col := ar4ja_row_col(row_index, e);
-              if iteration = 0 then
-                q(e) := llr_mem(col);
-              else
-                q(e) := sat_sub(llr_mem(col), r_mem(row_index)(e));
+            -- Static loop bound for Vivado synthesis; ignore padded edges.
+            for e in 0 to AR4JA_GRAPH_MAX_ROW_DEGREE - 1 loop
+              if e < degree then
+                col := ar4ja_row_col(row_index, e);
+                if iteration = 0 then
+                  q(e) := llr_mem(col);
+                else
+                  q(e) := sat_sub(llr_mem(col), r_mem(row_index)(e));
+                end if;
               end if;
             end loop;
 
@@ -93,10 +96,13 @@ begin
               check_node_min_sum(q, r_new);
             end if;
 
-            for e in 0 to degree - 1 loop
-              col := ar4ja_row_col(row_index, e);
-              llr_mem(col) <= sat_add(q(e), r_new(e));
-              r_mem(row_index)(e) <= r_new(e);
+            -- Static loop bound for Vivado synthesis; update active edges only.
+            for e in 0 to AR4JA_GRAPH_MAX_ROW_DEGREE - 1 loop
+              if e < degree then
+                col := ar4ja_row_col(row_index, e);
+                llr_mem(col) <= sat_add(q(e), r_new(e));
+                r_mem(row_index)(e) <= r_new(e);
+              end if;
             end loop;
 
             if row_index = AR4JA_GRAPH_ROWS - 1 then
@@ -110,10 +116,13 @@ begin
           when CHECK_SYNDROME =>
             parity := '0';
             degree := ar4ja_row_degree(row_index);
-            for e in 0 to degree - 1 loop
-              col := ar4ja_row_col(row_index, e);
-              if llr_mem(col) < to_signed(0, llr_mem(col)'length) then
-                parity := not parity;
+            -- Static loop bound for Vivado synthesis; parity uses active edges only.
+            for e in 0 to AR4JA_GRAPH_MAX_ROW_DEGREE - 1 loop
+              if e < degree then
+                col := ar4ja_row_col(row_index, e);
+                if llr_mem(col) < to_signed(0, llr_mem(col)'length) then
+                  parity := not parity;
+                end if;
               end if;
             end loop;
 
