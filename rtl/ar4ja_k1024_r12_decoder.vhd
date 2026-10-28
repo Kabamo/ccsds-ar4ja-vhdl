@@ -78,12 +78,16 @@ begin
             q := (others => (others => '0'));
             r_new := (others => (others => '0'));
 
-            for e in 0 to degree - 1 loop
-              col := ar4ja_row_col(row_index, e);
-              if iteration = 0 then
-                q(e) := llr_mem(col);
-              else
-                q(e) := sat_sub(llr_mem(col), r_mem(row_index)(e));
+            -- Use a compile-time loop bound for Vivado synthesis.
+            -- Only edges below the runtime row degree are active.
+            for e in 0 to AR4JA_GRAPH_MAX_ROW_DEGREE - 1 loop
+              if e < degree then
+                col := ar4ja_row_col(row_index, e);
+                if iteration = 0 then
+                  q(e) := llr_mem(col);
+                else
+                  q(e) := sat_sub(llr_mem(col), r_mem(row_index)(e));
+                end if;
               end if;
             end loop;
 
@@ -91,10 +95,12 @@ begin
             -- row degrees greater than six; padded zero entries are not edges.
             check_node_min_sum(q(0 to degree - 1), r_new(0 to degree - 1));
 
-            for e in 0 to degree - 1 loop
-              col := ar4ja_row_col(row_index, e);
-              llr_mem(col) <= sat_add(q(e), r_new(e));
-              r_mem(row_index)(e) <= r_new(e);
+            for e in 0 to AR4JA_GRAPH_MAX_ROW_DEGREE - 1 loop
+              if e < degree then
+                col := ar4ja_row_col(row_index, e);
+                llr_mem(col) <= sat_add(q(e), r_new(e));
+                r_mem(row_index)(e) <= r_new(e);
+              end if;
             end loop;
 
             if row_index = AR4JA_GRAPH_ROWS - 1 then
