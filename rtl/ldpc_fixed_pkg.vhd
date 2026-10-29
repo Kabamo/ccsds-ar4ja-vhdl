@@ -15,17 +15,23 @@ package ldpc_fixed_pkg is
   function sat_add(a : llr_t; b : llr_t) return llr_t;
   function sat_sub(a : llr_t; b : llr_t) return llr_t;
 
+  -- Normalized min-sum check-node update. Output bounds must match input bounds.
+  -- Each output excludes its own input; degree < 2 is defined as all zeros.
   procedure check_node_min_sum(
     inputs  : in  llr_array_t;
     outputs : out llr_array_t
   );
 
+  -- Variable-node extrinsic update:
+  -- extrinsic(i) = channel_llr + sum(check_messages(j), j /= i).
+  -- Accumulation is done in integer precision and saturated once per output.
   procedure variable_node_extrinsic(
     channel_llr    : in  llr_t;
     check_messages : in  llr_array_t;
     extrinsic      : out llr_array_t
   );
 
+  -- Posterior LLR = channel LLR + all incoming check-node messages.
   function variable_node_posterior(
     channel_llr    : llr_t;
     check_messages : llr_array_t
@@ -46,12 +52,16 @@ package body ldpc_fixed_pkg is
     return to_signed(clipped, 8);
   end function;
 
+  -- Keep the magnitude datapath narrow. Widen before negation so -128
+  -- is representable as +128, then saturate it to the 7-bit magnitude max.
   function llr_magnitude(value : llr_t) return mag_t is
     variable wide_value : signed(8 downto 0);
     variable magnitude  : unsigned(7 downto 0);
   begin
     wide_value := resize(value, wide_value'length);
     if value(7) = '1' then
+      -- Negation is 9 bits wide; explicitly resize to the 8-bit
+      -- unsigned magnitude (including the representable magnitude 128).
       magnitude := resize(unsigned(-wide_value), magnitude'length);
     else
       magnitude := resize(unsigned(wide_value), magnitude'length);
@@ -64,6 +74,8 @@ package body ldpc_fixed_pkg is
     end if;
   end function;
 
+  -- Exact floor(3*value/4) using a 9-bit constant multiply (x + 2*x)
+  -- followed by a two-bit shift, rather than VHDL integer arithmetic.
   function normalize_3_4(value : mag_t) return mag_t is
     variable wide_value : unsigned(8 downto 0);
     variable triple     : unsigned(8 downto 0);
@@ -73,6 +85,9 @@ package body ldpc_fixed_pkg is
     return resize(shift_right(triple, 2), 7);
   end function;
 
+  -- Use a 9-bit intermediate: the exact sum/difference of two signed
+  -- 8-bit operands fits in 9 bits. This avoids widening the datapath to
+  -- VHDL integer width during synthesis.
   function sat_add(a : llr_t; b : llr_t) return llr_t is
     variable wide_sum : signed(8 downto 0);
   begin
@@ -103,6 +118,8 @@ package body ldpc_fixed_pkg is
     inputs  : in  llr_array_t;
     outputs : out llr_array_t
   ) is
+    -- The decoder's maximum check-node degree is six. Explicit ranges keep
+    -- these temporaries narrow instead of carrying unconstrained integer widths.
     variable min1            : integer range 0 to 128 := 128;
     variable min2            : integer range 0 to 128 := 128;
     variable min1_index      : integer := -1;
