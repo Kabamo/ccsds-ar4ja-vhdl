@@ -13,7 +13,13 @@ package ar4ja_1024_frame_pkg is
   constant AR4JA_CHECKS        : positive := 1536;
   constant AR4JA_MAX_ITERATIONS : positive := 20;
 
+  -- Input order is transmitted CCSDS Bit 0 first. Positive LLR favors bit 0;
+  -- negative LLR favors bit 1. Punctured internal variables are not in this
+  -- input vector and must be initialized internally to neutral LLR zero.
   type ar4ja_llr_frame_t is array (0 to AR4JA_TX_BITS - 1) of llr_t;
+
+  -- Systematic information output, in transmitted information-bit order.
+  -- CRC handling is deliberately outside this LDPC frame contract.
   type ar4ja_bit_frame_t is array (0 to AR4JA_INFO_BITS - 1) of std_logic;
 
   type ar4ja_decode_status_t is (
