@@ -1,5 +1,6 @@
 -- SPDX-License-Identifier: MIT
 -- Sequential frame-parallel AR4JA normalized min-sum decoder prototype.
+-- Optimized for Vivado synthesis (flat memory mapping & fast elaboration).
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -23,12 +24,14 @@ end entity ar4ja_1024_decoder;
 architecture rtl of ar4ja_1024_decoder is
   type state_t is (IDLE, PROCESS_ROW, CHECK_SYNDROME, FINISH);
   type variable_llr_mem_t is array (0 to AR4JA_GRAPH_COLS - 1) of llr_t;
-  type row_message_t is array (0 to AR4JA_GRAPH_MAX_ROW_DEGREE - 1) of llr_t;
-  type message_mem_t is array (0 to AR4JA_GRAPH_ROWS - 1) of row_message_t;
+  
+  -- Flattened memory array for r_mem to avoid complex multidimensional elaboration overhead in Vivado
+  constant TOTAL_EDGES : positive := AR4JA_GRAPH_ROWS * AR4JA_GRAPH_MAX_ROW_DEGREE;
+  type message_mem_flat_t is array (0 to TOTAL_EDGES - 1) of llr_t;
 
   signal state          : state_t := IDLE;
   signal llr_mem        : variable_llr_mem_t := (others => (others => '0'));
-  signal r_mem          : message_mem_t := (others => (others => (others => '0')));
+  signal r_mem_flat     : message_mem_flat_t := (others => (others => '0'));
   signal row_index      : natural range 0 to AR4JA_GRAPH_ROWS - 1 := 0;
   signal iteration      : natural range 0 to AR4JA_MAX_ITERATIONS := 0;
   signal syndrome_bad   : std_logic := '0';
@@ -45,6 +48,7 @@ begin
     variable degree     : natural range 0 to AR4JA_GRAPH_MAX_ROW_DEGREE;
     variable col        : ar4ja_graph_col_t;
     variable parity     : std_logic;
+    variable flat_idx   : natural;
   begin
     if rising_edge(clk) then
       done_reg <= '0';
@@ -56,6 +60,7 @@ begin
         syndrome_bad <= '0';
         status_reg <= AR4JA_STATUS_IDLE;
         decoded_bits <= (others => '0');
+        r_mem_flat <= (others => (others => '0'));
       else
         case state is
           when IDLE =>
@@ -82,10 +87,11 @@ begin
             for e in 0 to AR4JA_GRAPH_MAX_ROW_DEGREE - 1 loop
               if e < degree then
                 col := ar4ja_row_col(row_index, e);
+                flat_idx := row_index * AR4JA_GRAPH_MAX_ROW_DEGREE + e;
                 if iteration = 0 then
                   q(e) := llr_mem(col);
                 else
-                  q(e) := sat_sub(llr_mem(col), r_mem(row_index)(e));
+                  q(e) := sat_sub(llr_mem(col), r_mem_flat(flat_idx));
                 end if;
               end if;
             end loop;
@@ -100,8 +106,9 @@ begin
             for e in 0 to AR4JA_GRAPH_MAX_ROW_DEGREE - 1 loop
               if e < degree then
                 col := ar4ja_row_col(row_index, e);
+                flat_idx := row_index * AR4JA_GRAPH_MAX_ROW_DEGREE + e;
                 llr_mem(col) <= sat_add(q(e), r_new(e));
-                r_mem(row_index)(e) <= r_new(e);
+                r_mem_flat(flat_idx) <= r_new(e);
               end if;
             end loop;
 
